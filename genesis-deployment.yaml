@@ -1,0 +1,169 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-app
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: my-app
+spec:
+  selector:
+    app: db
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: school
+            - name: MYSQL_PASSWORD
+              value: school
+            - name: MYSQL_DATABASE
+              value: School_DB
+            - name: MYSQL_USER
+              value: generic_operator
+          command: ["--default-authentication-plugin=mysql_native_password", "--bind-address=0.0.0.0", "--explicit_defaults_for_timestamp"]
+          volumeMounts:
+            - name: db-volume
+              mountPath: /docker-entrypoint-initdb.d
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adminer
+  namespace: my-app
+spec:
+  selector:
+    app: adminer
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  template:
+    metadata:
+      labels:
+        app: adminer
+    spec:
+      containers:
+        - name: adminer
+          image: adminer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: my-app
+spec:
+  selector:
+    matchLabels:
+      app: api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: your-api-image
+          ports:
+            - containerPort: 5555
+          volumeMounts:
+            - name: api-volume
+              mountPath: /SmartUP/App
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scrapper
+  namespace: my-app
+spec:
+  selector:
+    matchLabels:
+      app: scrapper
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: scrapper
+    spec:
+      containers:
+        - name: scrapper
+          image: your-scrapper-image
+          volumeMounts:
+            - name: scrapper-volume
+              mountPath: /SmartUP/App
+            - name: cron-volume
+              mountPath: /etc/cron.d/scraper-cron
+          stdin: true
+          tty: true
+          dependsOn:
+            - name: db
+            - name: adminer
+            - name: api
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-volume
+  namespace: my-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: api-volume
+  namespace: my-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scrapper-volume
+  namespace: my-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cron-volume
+  namespace: my-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
