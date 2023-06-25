@@ -24,4 +24,4 @@ COPY . .
 EXPOSE 5555
 
 # Run the command to start your application
-CMD [ "python3", "-m", "flask", "run", "--host=0.0.0.0" ]
+CMD ["python3", "App/run.py"]
