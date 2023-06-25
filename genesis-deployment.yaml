@@ -86,37 +86,6 @@ spec:
               mountPath: /SmartUP/App
 
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: scrapper
-  namespace: my-app
-spec:
-  selector:
-    matchLabels:
-      app: scrapper
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: scrapper
-    spec:
-      containers:
-        - name: scrapper
-          image: your-scrapper-image
-          volumeMounts:
-            - name: scrapper-volume
-              mountPath: /SmartUP/App
-            - name: cron-volume
-              mountPath: /etc/cron.d/scraper-cron
-          stdin: true
-          tty: true
-          dependsOn:
-            - name: db
-            - name: adminer
-            - name: api
-
----
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -134,32 +103,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: api-volume
-  namespace: my-app
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: scrapper-volume
-  namespace: my-app
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: cron-volume
   namespace: my-app
 spec:
   accessModes:

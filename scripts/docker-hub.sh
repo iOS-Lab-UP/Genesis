@@ -1,17 +1,25 @@
 #!/bin/bash
 
 # Source the .env file from the parent directory to load the credentials
-source "../.env"
+source "./.env"
+
+# Set the base directory
+base_dir="$(dirname "$(dirname "$0")")/Services"
+
+echo $base_dir
 
 # List of Docker image directories
 IMAGE_DIRECTORIES=(
-  "Services/0-api-getway"
-  "Services/1-doctor-service"
-  "Services/2-doctor-verification-service"
-  "Services/3-user-service"
-  "Services/4-monitoring-service"
-  "Services/5-symptom-analysis-service"
+  "/0-api-getway"
+  "/1-doctor-service"
+  "/2-doctor-verification-service"
+  "/3-user-service"
+  "/4-monitoring-service"
+  "/5-symptom-analysis-service"
 )
+
+# Login to Docker Hub
+echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
 # Iterate over the image directories and build/push Docker images
 for directory in "${IMAGE_DIRECTORIES[@]}"; do
@@ -21,14 +29,11 @@ for directory in "${IMAGE_DIRECTORIES[@]}"; do
   image_name=$(basename "$directory")
 
   # Build the Docker image
-  docker build -t "$username/$image_name" "$directory"
-
-  # Login to Docker Hub
-  echo "$dockerhub-password" | docker login -u "$dockerhub-username" --password-stdin
+  docker build -t "$DOCKERHUB_USERNAME/$image_name" "$base_dir/$directory"
 
   # Push the Docker image to Docker Hub
-  docker push "$username/$image_name"
-
-  # Logout from Docker Hub
-  docker logout
+  docker push "$DOCKERHUB_USERNAME/$image_name"
 done
+
+# Logout from Docker Hub
+docker logout
