@@ -4,10 +4,7 @@ from datetime import datetime
 from genesis_api import db
 from flask_restful import reqparse
 from werkzeug.exceptions import BadRequest
-
 import psutil
-import logging
-import traceback
 
 
 def server_status() -> str:
@@ -28,6 +25,7 @@ def server_status() -> str:
         status = "CRITICAL"
     return status
 
+
 @contextmanager
 def session_scope():
     """Provide a transactional scope around a series of operations."""
@@ -40,7 +38,6 @@ def session_scope():
         raise
     finally:
         session.close()
-
 
 
 def color(color: int, text: str) -> str:
@@ -84,22 +81,21 @@ def writeHTMLFile(rows: list) -> None:
         f.write("\n</body>\n</html>")
 
 
-def parseTime(dt_str: str) -> datetime:
-    return datetime.strptime(dt_str, '%A %I:%M%p - %I:%M%p')
-
-def parse_request(*expected_args, location='json', data_type=str):
+def parse_request(args_types: dict, location='json'):
     parser = reqparse.RequestParser(bundle_errors=True)
-    for arg in expected_args:
-        parser.add_argument(arg, type=data_type, location=location, required=True)
-    
+    for arg, data_type in args_types.items():
+        parser.add_argument(arg, type=data_type,
+                            location=location, required=True)
+
     try:
         args = parser.parse_args(strict=True)
         return args
     except BadRequest as e:
         # Handle missing or incorrect arguments
-        error_message = "Invalid request parameters. "
+        error_message = "Invalid request parameters: "
         error_message += ", ".join(e.data.get('errors', {}).values())
-        raise BadRequest(description=error_message)
+        return jsonify({'message': error_message}), 400
+
 
 def generate_response(success: bool, message: str, data: dict, status: int, error: str = None) -> dict:
     response = {
