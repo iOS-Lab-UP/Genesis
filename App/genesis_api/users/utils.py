@@ -1,10 +1,12 @@
 from genesis_api import db
 from genesis_api.models import User, Profile
 from genesis_api.security import encodeJwtToken
+from genesis_api.tools.handlers import IncorrectCredentialsError
 
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
 from sqlalchemy.orm import close_all_sessions
+
 
 import logging
 
@@ -32,6 +34,29 @@ def create_user(session: any, name: str, username: str, email: str, password: st
         raise
     finally:
         close_all_sessions()  # Close all open sessions
+        
+def sign_in(session: any, username: str, password: str) -> User:
+    '''Sign in function in order to authenticate user'''
+
+    try:
+        user = session.query(User).\
+            filter(User.username == username).\
+            first()
+            
+        if user and user.check_password(password):
+            user_data = user.to_dict()
+            user_data['jwt_token'] = encodeJwtToken(user_data)
+            return user_data
+        else:
+            raise IncorrectCredentialsError(
+                'The provided username or password is incorrect. Please try again.'
+            )
+    except Exception as e:
+        logging.error(e)
+        raise
+    finally:
+        close_all_sessions()
+
 
 
 def get_user(id: int) -> dict[str:str]:

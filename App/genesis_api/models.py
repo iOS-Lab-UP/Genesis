@@ -1,6 +1,7 @@
 from genesis_api import db
 from datetime import datetime
 from sqlalchemy import Index
+from flask_bcrypt  import check_password_hash
 
 
 class BaseModel(db.Model):
@@ -51,6 +52,13 @@ class User(BaseModel):
     password_hash = db.Column(db.String(60), nullable=False)
     birth_date = db.Column(db.Date)
     profile_id = db.Column(db.Integer, db.ForeignKey('PROFILE.id'), nullable=False)
+
+    def check_password(self, password: str) -> bool:
+        """
+        Checks if the password matches the user's password.
+        """
+        return check_password_hash(self.password_hash, password)
+
 
 
 class Profile(BaseModel):

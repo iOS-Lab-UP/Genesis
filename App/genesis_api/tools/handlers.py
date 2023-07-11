@@ -7,3 +7,6 @@ class UserAlreadyExistsError(Exception):
 class InvalidRequestParameters(Exception):
     pass
 
+class IncorrectCredentialsError(Exception):
+    '''Custom exception class for incorrect user credentials'''
+    pass

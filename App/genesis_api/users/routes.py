@@ -1,12 +1,12 @@
 from flask import Blueprint
 from sqlalchemy.orm import sessionmaker
-from genesis_api.tools.handlers import InvalidRequestParameters
+from genesis_api.tools.handlers import InvalidRequestParameters, IncorrectCredentialsError
 
 
 from genesis_api.users.utils import *
-from genesis_api import db
 from genesis_api.tools.utils import parse_request, generate_response
 from genesis_api.security import token_required
+from genesis_api import db
 
 user = Blueprint('user', __name__)
 Session = sessionmaker(bind=db.engine)
@@ -25,17 +25,33 @@ def sign_up_endpoint() -> dict[str:str]:
     finally:
         session.close()
 
-@token_required
-@user.route('/get_user_data', methods=['GET'])
-def get_user_data_endpoint() -> dict[str:str]:
-    '''Get user information'''
-    args = parse_request("id", data_type=int)
-
+@user.route('/sign_in', methods=['POST'])
+def sign_in_endpoint() -> dict[str:str]:
+    session = Session()
     try:
-        user = get_user(args['id'])
-        return generate_response(True, f'User: {user.id}', user.to_dict(), 200)
+        args = parse_request({"username": str, "password": str})
+        user = sign_in(session, **args)
+        return generate_response(True, 'User was successfully authenticated', user, 200), 200
+    except InvalidRequestParameters as e:
+        return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
+    except IncorrectCredentialsError as e:
+        return generate_response(False, 'Incorrect credentials', None, 401, str(e)), 401
     except Exception as e:
-        return generate_response(False, 'Could not get user', None, 500, str(e))
+        return generate_response(False, 'Could not authenticate user', None, 500, str(e)), 500    
+    finally:
+        session.close()
+
+
+@user.route('/get_user_data', methods=['GET'])
+@token_required
+def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
+    '''Get user information'''
+    try:
+        user = User.get_data(current_user.id)  # Retrieve user data using the authenticated user's ID
+        return generate_response(True, f'User: {user.id}', user.to_dict(), 200), 200
+    except Exception as e:
+        return generate_response(False, 'Could not get user', None, 500, str(e)), 500
+
 
 @user.route('/updateUser', methods=['PUT'])
 def update_user() -> dict[str:str]:
