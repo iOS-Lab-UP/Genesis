@@ -1,27 +1,38 @@
 from genesis_api import db
 from genesis_api.models import User, Profile
+from genesis_api.security import encodeJwtToken
+
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
+from sqlalchemy.orm import close_all_sessions
+
+
 import logging
 
 
-def create_user(name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int) -> User:
+def create_user(session: any, name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int) -> User:
     '''Create a user and return a User object type'''
 
     try:
-        if not User.query.filter_by(email=email).first() and not User.query.filter_by(username=username).first() and Profile.query.filter_by(id=profile_id).first():
+        if not session.query(User).filter_by(email=email).first() and not session.query(User).filter_by(username=username).first() and session.query(Profile).filter_by(id=profile_id).first():
             user = User(name=name, username=username, email=email,
                         password_hash=generate_password_hash(password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id)
-            db.session.add(user)
-            db.session.commit()
-            return user.to_dict()
+            session.add(user)
+            session.commit()
+
+            user_data = user.to_dict()
+            user_data['jwt_token'] = encodeJwtToken(user_data)
+            return user_data
         else:
             raise ValueError(
-                f'User Already exists in the database, please try again with a different email or username'
+                f'User already exists in the database. Please try again with a different email or username.'
             )
     except Exception as e:
+        session.rollback()
         logging.error(e)
         raise
+    finally:
+        close_all_sessions()  # Close all open sessions
 
 
 def get_user(id: int) -> dict[str:str]:

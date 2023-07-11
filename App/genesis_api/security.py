@@ -9,7 +9,7 @@ import jwt
 import traceback
 
 
-def tokenRequired(func) -> Callable:
+def token_required(func) -> Callable:
     '''Decorator to check if the user has a valid token'''
     @wraps(func)
     def decorator(*args, **kwargs):
@@ -38,7 +38,6 @@ def encodeJwtToken(user: dict[str, str]) -> dict[str, str]:
                 'user': {
                     'id': user['id'],
                     'name': user['name'],
-                    'lastName': user['lastName'],
                     'username': user['username'],
                     'email': user['email'],
                     'profile_id': user['profile_id'],
