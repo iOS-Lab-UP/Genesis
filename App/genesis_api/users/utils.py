@@ -62,6 +62,13 @@ def sign_in(session: any, username: str, password: str) -> User:
     finally:
         close_all_sessions()
 
+def sign_out(session: any, user_id: int) -> User:
+    '''Sign out function in order to sign out user'''
+    # TODO: expire the jwt token
+    pass
+    
+
+
 
 
 def get_user(id: int) -> dict[str:str]:

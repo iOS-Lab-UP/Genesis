@@ -44,13 +44,24 @@ def sign_in_endpoint() -> dict[str:str]:
     finally:
         session.close()
 
+@user.route('/sign_out', methods=['POST'])
+@token_required
+def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
+    '''Sign out user'''
+    session = Session()
+    try:
+        sign_out(session, current_user.id)
+        return generate_response(True, 'User was successfully signed out', None, 200), 200
+    except Exception as e:
+        return generate_response(False, 'Could not sign out user', None, 500, str(e)), 500
+
 
 @user.route('/get_user_data', methods=['GET'])
 @token_required
 def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Get user information'''
     try:
-        user = User.get_data(current_user.id)  # Retrieve user data using the authenticated user's ID
+        user = get_user(current_user.id)  # Retrieve user data using the authenticated user's ID
         return generate_response(True, f'User: {user.id}', user.to_dict(), 200), 200
     except Exception as e:
         return generate_response(False, 'Could not get user', None, 500, str(e)), 500
@@ -59,6 +70,7 @@ def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
 @user.route('/updateUser', methods=['PUT'])
 def update_user() -> dict[str:str]:
     '''Update user information'''
+    session = Session()
     args = parse_request("id", "name", "username", "email", "password", "birth_date")
     args['password'] = generate_password_hash(args['password'])
 
