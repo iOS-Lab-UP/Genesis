@@ -51,7 +51,9 @@ class User(BaseModel):
     email = db.Column(db.String(255), nullable=False)
     password_hash = db.Column(db.String(60), nullable=False)
     birth_date = db.Column(db.Date)
+    cedula = db.Column(db.String(255), nullable=True)
     profile_id = db.Column(db.Integer, db.ForeignKey('PROFILE.id'), nullable=False)
+
 
     def check_password(self, password: str) -> bool:
         """

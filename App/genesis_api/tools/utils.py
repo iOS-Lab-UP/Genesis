@@ -85,11 +85,13 @@ def writeHTMLFile(rows: list) -> None:
 
 
 
-def parse_request(args_types: dict, location='json'):
+
+def parse_request(args_types: dict, location='json', required_args=None):
     parser = reqparse.RequestParser(bundle_errors=True)
     for arg, data_type in args_types.items():
+        required = arg in required_args if required_args else False
         parser.add_argument(arg, type=data_type,
-                            location=location, required=True)
+                            location=location, required=required)
 
     try:
         args = parser.parse_args(strict=True)
@@ -110,3 +112,46 @@ def generate_response(success: bool, message: str, data: dict, status: int, erro
     if data is not None:
         response['data'] = data
     return response
+
+
+def split_names(nombre: str) -> list[str]:
+    tokens = nombre.split(" ")
+    names = []
+    special_tokens = ['da', 'de', 'di', 'do', 'del', 'la', 'las', 
+                      'le', 'los', 'mac', 'mc', 'van', 'von', 'y', 'i', 'san', 'santa']
+    previous = ""
+    
+    for token in tokens:
+        lowercase_token = token.lower()
+        
+        if lowercase_token in special_tokens:
+            previous += token + " "
+        else:
+            names.append(previous + token)
+            previous = ""
+    
+    num_names = len(names)
+    first_name, last_name1, last_name2 = "", "", ""
+    
+    if num_names == 0:
+        first_name = ""
+    elif num_names == 1:
+        first_name = names[0]
+    elif num_names == 2:
+        first_name = names[0]
+        last_name1 = names[1]
+    elif num_names == 3:
+        first_name = names[0]
+        last_name1 = names[1]
+        last_name2 = names[2]
+    else:
+        first_name = names[0] + " " + names[1]
+        last_name1 = names[2]
+        last_name2 = names[3]
+    
+    first_name = first_name.title()
+    last_name1 = last_name1.title()
+    last_name2 = last_name2.title()
+    
+    name_lastname = [first_name, (last_name1 + ' ' + last_name2)]
+    return name_lastname

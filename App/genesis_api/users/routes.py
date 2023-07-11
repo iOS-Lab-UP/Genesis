@@ -14,8 +14,11 @@ Session = sessionmaker(bind=db.engine)
 @user.route('/sign_up', methods=['POST'])
 def sign_up_endpoint() -> dict[str:str]:
     session = Session()
+    fields = {"name": str, "username": str, "email": str, "password": str, "birth_date": str, "profile_id": int, "cedula": str}
+    required_fields = ["name", "username", "email", "password", "birth_date", "profile_id"]
+
     try:
-        args = parse_request({"name": str, "username": str, "email": str, "password": str, "birth_date": str, "profile_id": int})
+        args = parse_request(fields, 'json',required_fields)
         user = create_user(session, **args)
         return generate_response(True, 'User was successfully created', user, 201), 201
     except InvalidRequestParameters as e:

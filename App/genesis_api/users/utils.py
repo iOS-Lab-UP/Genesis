@@ -2,6 +2,7 @@ from genesis_api import db
 from genesis_api.models import User, Profile
 from genesis_api.security import encodeJwtToken
 from genesis_api.tools.handlers import IncorrectCredentialsError
+from genesis_api.tools.utils import split_names
 
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
@@ -9,31 +10,35 @@ from sqlalchemy.orm import close_all_sessions
 
 
 import logging
+import requests
 
-
-def create_user(session: any, name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int) -> User:
+def create_user(session: any, name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
     '''Create a user and return a User object type'''
 
-    try:
-        if not session.query(User).filter_by(email=email).first() and not session.query(User).filter_by(username=username).first() and session.query(Profile).filter_by(id=profile_id).first():
-            user = User(name=name, username=username, email=email,
-                        password_hash=generate_password_hash(password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id)
-            session.add(user)
-            session.commit()
+    if session.query(User).filter(User.email == email).first() or session.query(User).filter(User.username == username).first() or not session.query(Profile).filter(Profile.id == profile_id).first():
+        raise ValueError('User already exists in the database. Please try again with a different email or username.')
 
-            user_data = user.to_dict()
-            user_data['jwt_token'] = encodeJwtToken(user_data)
-            return user_data
-        else:
-            raise ValueError(
-                f'User already exists in the database. Please try again with a different email or username.'
-            )
+    if cedula:
+        if not validate_doctor_identity(cedula, name):
+            raise ValueError('You could not be registered as a doctor because your identity could not be validated. Please try again with a different cedula.')
+
+    try:
+        user = User(name=name, username=username, email=email, password_hash=generate_password_hash(password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id, cedula=cedula)
+        session.add(user)
+        session.commit()
+
+        user_data = user.to_dict()
+        user_data['jwt_token'] = encodeJwtToken(user_data)
+        return user_data
+
     except Exception as e:
         session.rollback()
         logging.error(e)
         raise
+
     finally:
         close_all_sessions()  # Close all open sessions
+
         
 def sign_in(session: any, username: str, password: str) -> User:
     '''Sign in function in order to authenticate user'''
@@ -109,3 +114,36 @@ def delete_user(id: int) -> User:
     except Exception as e:
         logging.error(e)
         return None
+
+
+def validate_doctor_identity(cedula: str, name: str) -> bool:
+    '''Validate doctor identity in order to validate doctor's identity'''
+
+    url = "https://www.cedulaprofesional.sep.gob.mx/cedula/buscaCedulaJson.action"
+
+    complete_names = [name_part.upper() for name_part in split_names(name)]
+    first_name = complete_names[0]
+    last_name_parts = complete_names[1].split(' ')
+    last_name1 = last_name_parts[0]
+    last_name2 = last_name_parts[1]
+    id_cedula = cedula
+
+    # Build the payload string with variables
+    payload = f'json=%7B%22maxResult%22%3A%221000%22%2C%22nombre%22%3A%22{first_name}%22%2C%22paterno%22%3A%22{last_name1}%22%2C%22materno%22%3A%22{last_name2}%22%2C%22idCedula%22%3A%22{id_cedula}%22%7D'
+
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    }
+
+    response = requests.post(url, headers=headers, data=payload)
+
+    def is_valid(json, first_name, last_name1, last_name2, id_cedula) -> bool:
+        credentials = json['items'][0]
+        return (
+            credentials['nombre'] == first_name and
+            credentials['paterno'] == last_name1 and
+            credentials['materno'] == last_name2 and
+            credentials['idCedula'] == id_cedula
+        )
+
+    return is_valid(response.json(), first_name, last_name1, last_name2, id_cedula)
