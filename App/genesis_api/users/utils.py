@@ -6,7 +6,6 @@ from flask_bcrypt import generate_password_hash
 from datetime import datetime
 from sqlalchemy.orm import close_all_sessions
 
-
 import logging
 
 
@@ -39,8 +38,7 @@ def get_user(id: int) -> dict[str:str]:
     '''Get user function in order to get user's info from DB'''
 
     try:
-        user = User.query.filter_by(id=id).first()
-        return user
+        return User.get_data(id)
     except Exception as e:
         logging.error(e)
         return None

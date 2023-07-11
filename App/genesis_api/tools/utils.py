@@ -1,3 +1,4 @@
+from genesis_api.tools.handlers import InvalidRequestParameters
 from flask import session, jsonify
 from contextlib import contextmanager
 from datetime import datetime
@@ -81,6 +82,9 @@ def writeHTMLFile(rows: list) -> None:
         f.write("\n</body>\n</html>")
 
 
+
+
+
 def parse_request(args_types: dict, location='json'):
     parser = reqparse.RequestParser(bundle_errors=True)
     for arg, data_type in args_types.items():
@@ -92,9 +96,7 @@ def parse_request(args_types: dict, location='json'):
         return args
     except BadRequest as e:
         # Handle missing or incorrect arguments
-        error_message = "Invalid request parameters: "
-        error_message += ", ".join(e.data.get('errors', {}).values())
-        return jsonify({'message': error_message}), 400
+        raise InvalidRequestParameters(f"Missing arguments or incorrect data types")
 
 
 def generate_response(success: bool, message: str, data: dict, status: int, error: str = None) -> dict:

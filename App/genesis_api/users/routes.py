@@ -1,9 +1,7 @@
 from flask import Blueprint
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from genesis_api.tools.handlers import InvalidRequestParameters
 
-# Assuming you have defined the User and Profile models and initialized the engine
-# Create a session factory
 
 from genesis_api.users.utils import *
 from genesis_api import db
@@ -15,12 +13,13 @@ Session = sessionmaker(bind=db.engine)
 
 @user.route('/sign_up', methods=['POST'])
 def sign_up_endpoint() -> dict[str:str]:
-    args = parse_request({"name": str, "username": str, "email": str, "password": str, "birth_date": str, "profile_id": int})
     session = Session()
-
     try:
+        args = parse_request({"name": str, "username": str, "email": str, "password": str, "birth_date": str, "profile_id": int})
         user = create_user(session, **args)
-        return generate_response(True, 'User was successfully created', user, 200), 200
+        return generate_response(True, 'User was successfully created', user, 201), 201
+    except InvalidRequestParameters as e:
+        return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
     except Exception as e:
         return generate_response(False, 'Could not create user', None, 500, str(e)), 500    
     finally:
