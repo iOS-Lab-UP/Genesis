@@ -5,9 +5,9 @@ from genesis_api.tools.utils import parse_request, generate_response
 user = Blueprint('user', __name__)
 
 
-@user.route('/createUser', methods=['POST'])
-def create_user_endpoint() -> dict[str:str]:
-    args = parse_request("name", "username", "email", "password", "birth_date")
+@user.route('/sign_up', methods=['POST'])
+def sign_up_endpoint() -> dict[str:str]:
+    args = parse_request("name", "username", "email", "password", "birth_date", "profile_id")
 
     try:
         user = create_user(**args)

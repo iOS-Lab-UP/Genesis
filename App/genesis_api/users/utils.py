@@ -1,17 +1,17 @@
 from genesis_api import db
-from genesis_api.models import User
+from genesis_api.models import User, Profile
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
 import logging
 
 
-def create_user(name: str, username: str, email: str, password: str, birth_date: datetime) -> User:
+def create_user(name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int) -> User:
     '''Create a user and return a User object type'''
 
     try:
-        if not User.query.filter_by(email=email).first() and not User.query.filter_by(username=username).first():
+        if not User.query.filter_by(email=email).first() and not User.query.filter_by(username=username).first() and Profile.query.filter_by(id=profile_id).first():
             user = User(name=name, username=username, email=email,
-                        password_hash=generate_password_hash(password).decode('utf-8'), birth_date=birth_date)
+                        password_hash=generate_password_hash(password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id)
             db.session.add(user)
             db.session.commit()
             return user.to_dict()
