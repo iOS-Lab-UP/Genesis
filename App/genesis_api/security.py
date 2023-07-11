@@ -10,6 +10,7 @@ from genesis_api.models import User
 import logging
 import jwt
 import traceback
+import re
 
 
 def token_required(func) -> Callable:
@@ -39,7 +40,6 @@ def token_required(func) -> Callable:
     return decorator
 
 
-
 def encodeJwtToken(user: dict[str, str]) -> dict[str, str]:
     '''Encodes a user object into a JWT token'''
     try:
@@ -65,3 +65,31 @@ def encodeJwtToken(user: dict[str, str]) -> dict[str, str]:
         token = None
 
     return token
+
+
+def sql_injection_free(func):
+    """Decorator to check if incoming JSON data is free from SQL injection attempts."""
+    @wraps(func)
+    def decorator(*args, **kwargs):
+        data = request.get_json()
+        for value in data.values():
+            if not is_sql_injection_free(str(value)):
+                return jsonify({'message': 'Invalid input'}), 400
+        return func(*args, **kwargs)
+    return decorator
+
+
+def is_sql_injection_free(input_string):
+    """Check if input_string is free from SQL injection attempts."""
+    # Convert the input to lower case
+    input_lower = input_string.lower()
+
+    # List of SQL keywords that might be used in an injection attack
+    keywords = ['select', 'insert', 'update',
+                'delete', 'drop', '--', '/*', '*/', 'xp_', ';']
+
+    # Check if any keyword is in the input
+    if any(keyword in input_lower for keyword in keywords):
+        return False
+    else:
+        return True

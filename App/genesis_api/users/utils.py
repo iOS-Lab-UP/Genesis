@@ -1,8 +1,8 @@
 from genesis_api import db
 from genesis_api.models import User, Profile
 from genesis_api.security import encodeJwtToken
-from genesis_api.tools.handlers import IncorrectCredentialsError
-from genesis_api.tools.utils import split_names
+from genesis_api.tools.handlers import IncorrectCredentialsError, InvalidRequestParameters
+from genesis_api.tools.utils import *
 
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
@@ -12,18 +12,22 @@ from sqlalchemy.orm import close_all_sessions
 import logging
 import requests
 
+
 def create_user(session: any, name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
     '''Create a user and return a User object type'''
 
-    if session.query(User).filter(User.email == email).first() or session.query(User).filter(User.username == username).first() or not session.query(Profile).filter(Profile.id == profile_id).first():
-        raise ValueError('User already exists in the database. Please try again with a different email or username.')
+    if not is_username_valid(session, username) or not is_valid_email(session, email) or not session.query(Profile).filter(Profile.id == profile_id).first():
+        raise InvalidRequestParameters(
+            'User already exists in the database. Please try again with a different email or username.')
 
     if cedula:
         if not validate_doctor_identity(cedula, name):
-            raise ValueError('You could not be registered as a doctor because your identity could not be validated. Please try again with a different cedula.')
+            raise ValueError(
+                'You could not be registered as a doctor because your identity could not be validated. Please try again with a different cedula.')
 
     try:
-        user = User(name=name, username=username, email=email, password_hash=generate_password_hash(password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id, cedula=cedula)
+        user = User(name=name, username=username, email=email, password_hash=generate_password_hash(
+            password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id, cedula=cedula)
         session.add(user)
         session.commit()
 
@@ -39,7 +43,7 @@ def create_user(session: any, name: str, username: str, email: str, password: st
     finally:
         close_all_sessions()  # Close all open sessions
 
-        
+
 def sign_in(session: any, username: str, password: str) -> User:
     '''Sign in function in order to authenticate user'''
 
@@ -47,7 +51,7 @@ def sign_in(session: any, username: str, password: str) -> User:
         user = session.query(User).\
             filter(User.username == username).\
             first()
-            
+
         if user and user.check_password(password):
             user_data = user.to_dict()
             user_data['jwt_token'] = encodeJwtToken(user_data)
@@ -62,13 +66,11 @@ def sign_in(session: any, username: str, password: str) -> User:
     finally:
         close_all_sessions()
 
+
 def sign_out(session: any, user_id: int) -> User:
     '''Sign out function in order to sign out user'''
     # TODO: expire the jwt token
     pass
-    
-
-
 
 
 def get_user(id: int) -> dict[str:str]:

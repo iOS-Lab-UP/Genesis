@@ -1,3 +1,4 @@
+from genesis_api.models import User
 from genesis_api.tools.handlers import InvalidRequestParameters
 from flask import session, jsonify
 from contextlib import contextmanager
@@ -5,6 +6,8 @@ from datetime import datetime
 from genesis_api import db
 from flask_restful import reqparse
 from werkzeug.exceptions import BadRequest
+from email_validator import validate_email, EmailNotValidError
+
 import psutil
 
 
@@ -82,10 +85,6 @@ def writeHTMLFile(rows: list) -> None:
         f.write("\n</body>\n</html>")
 
 
-
-
-
-
 def parse_request(args_types: dict, location='json', required_args=None):
     parser = reqparse.RequestParser(bundle_errors=True)
     for arg, data_type in args_types.items():
@@ -98,7 +97,8 @@ def parse_request(args_types: dict, location='json', required_args=None):
         return args
     except BadRequest as e:
         # Handle missing or incorrect arguments
-        raise InvalidRequestParameters(f"Missing arguments or incorrect data types")
+        raise InvalidRequestParameters(
+            f"Missing arguments or incorrect data types")
 
 
 def generate_response(success: bool, message: str, data: dict, status: int, error: str = None) -> dict:
@@ -117,22 +117,22 @@ def generate_response(success: bool, message: str, data: dict, status: int, erro
 def split_names(nombre: str) -> list[str]:
     tokens = nombre.split(" ")
     names = []
-    special_tokens = ['da', 'de', 'di', 'do', 'del', 'la', 'las', 
+    special_tokens = ['da', 'de', 'di', 'do', 'del', 'la', 'las',
                       'le', 'los', 'mac', 'mc', 'van', 'von', 'y', 'i', 'san', 'santa']
     previous = ""
-    
+
     for token in tokens:
         lowercase_token = token.lower()
-        
+
         if lowercase_token in special_tokens:
             previous += token + " "
         else:
             names.append(previous + token)
             previous = ""
-    
+
     num_names = len(names)
     first_name, last_name1, last_name2 = "", "", ""
-    
+
     if num_names == 0:
         first_name = ""
     elif num_names == 1:
@@ -148,10 +148,43 @@ def split_names(nombre: str) -> list[str]:
         first_name = names[0] + " " + names[1]
         last_name1 = names[2]
         last_name2 = names[3]
-    
+
     first_name = first_name.title()
     last_name1 = last_name1.title()
     last_name2 = last_name2.title()
-    
+
     name_lastname = [first_name, (last_name1 + ' ' + last_name2)]
     return name_lastname
+
+
+def is_valid_email(session: any, email_address: str) -> bool:
+    '''Check if the email address is valid and not already in the database'''
+    try:
+        # Check that the email address is valid
+        emailinfo = validate_email(email_address, check_deliverability=False)
+
+        # After this point, use only the normalized form of the email address,
+        # especially before going to a database query.
+        email_address = emailinfo.normalized
+
+        # Check if the email exists in the database
+        email_exists = session.query(User).filter(
+            User.email == email_address).first() is not None
+
+        return not email_exists
+
+    except EmailNotValidError:
+        return False
+
+
+def is_username_valid(session, username):
+    """Check if username is valid."""
+    # Check if username is lowercase
+    if not username.islower():
+        return False
+
+    # Check if username exists in the database
+    if session.query(User).filter(User.username == username).first():
+        return False
+
+    return True
