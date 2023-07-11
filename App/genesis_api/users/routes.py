@@ -7,7 +7,7 @@ user = Blueprint('user', __name__)
 
 @user.route('/sign_up', methods=['POST'])
 def sign_up_endpoint() -> dict[str:str]:
-    args = parse_request("name", "username", "email", "password", "birth_date", "profile_id")
+    args = parse_request({"name": str, "username": str, "email": str, "password": str, "birth_date": str, "profile_id": int})
 
     try:
         user = create_user(**args)

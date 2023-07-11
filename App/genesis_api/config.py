@@ -1,18 +1,21 @@
 import os
-import secrets
+from dotenv import load_dotenv
 
+# Specify the path to your .env file if it's not in the same directory as this file
+dotenv_path = os.path.join(os.path.dirname(__file__), '../../.env')
+
+# Load the .env file
+load_dotenv(dotenv_path)
 
 class Config:
     # SQL Credentials
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "SQLALCHEMY_DATABASE_URI", 'sqlite:///site.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = 'False'
-    MYSQL_HOST = os.environ.get("MYSQL_HOST", 'db')
-    MYSQL_USER = os.environ.get("MYSQL_USER", 'admin')
-    MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", 'admin')
-    MYSQL_DB = os.environ.get("MYSQL_DB", 'generic_db')
-    MYSQL_PORT = os.environ.get("MYSQL_PORT", '3306')
+    # SQLALCHEMY_DATABASE_URI = os.environ("SQLALCHEMY_DATABASE_URI"]
+    MYSQL_HOST = os.getenv("MYSQL_HOST")
+    MYSQL_USER = os.getenv("MYSQL_USER")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
+    MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
+    MYSQL_PORT = os.getenv("MYSQL_PORT")
     SQLALCHEMY_DATABASE_URI = "mysql://" + MYSQL_USER + ":" + \
-        MYSQL_PASSWORD+"@"+MYSQL_HOST+"/"+MYSQL_DB+"?charset=utf8mb4"
+        MYSQL_PASSWORD + "@" + MYSQL_HOST + "/" + MYSQL_DATABASE + "?charset=utf8mb4"
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = True

@@ -41,7 +41,7 @@ def encodeJwtToken(user: dict[str, str]) -> dict[str, str]:
                     'lastName': user['lastName'],
                     'username': user['username'],
                     'email': user['email'],
-                    'profile_id': user['profileID'],
+                    'profile_id': user['profile_id'],
                     'exp': str(datetime.utcnow() + timedelta(days=50))
                 }
             },
