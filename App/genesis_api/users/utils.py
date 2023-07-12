@@ -82,28 +82,52 @@ def get_user(id: int) -> dict[str:str]:
         logging.error(e)
         return None
 
+def validate_user_data(session:any, user_data: User, profile_id: int, cedula: str) -> dict:
+    
+    print(user_data)
+    validated_data = {}
 
-def update_user(id: int, name: str, username: str, email: str, password: str, birth_date: datetime) -> User:
+    if 'name' in user_data:
+        validated_data['name'] = user_data['name']
+
+    if 'username' in user_data:
+        validated_data['username'] = user_data['username'] if is_username_valid(session, user_data['username']) else None
+
+    if 'email' in user_data:
+        validated_data['email'] = user_data['email'] if is_valid_email(session, user_data['email']) else None
+
+    if 'password' in user_data:
+        validated_data['password_hash'] = generate_password_hash(user_data['password']).decode('utf-8')
+
+    if 'birth_date' in user_data:
+        validated_data['birth_date'] = user_data['birth_date']
+
+    if profile_id == 2 and not validate_doctor_identity(cedula, user_data['name']):
+        raise ValueError(
+            'You could not be registered as a doctor because your identity could not be validated. Please try again with a different cedula.'
+        )
+
+    return validated_data
+
+
+def update_user(session:any,current_user_id: int, **user_data: User) -> User:
     '''Update user function in order to update user's info from DB'''
+    
+    user = session.query(User).filter(User.id == current_user_id).first()
+    if user and user.check_password(user_data.get('password', '')):
+        validated_data = validate_user_data(session, user_data, user.profile_id, user.cedula)
+        for field, value in validated_data.items():
+            if value is not None:
+                setattr(user, field, value)
+        
+        session.commit()
+        return user
 
-    try:
-        user = User.query.filter_by(id=id).first()
-        if user:
-            user.name = name
-            user.username = username
-            user.email = email
-            user.password = generate_password_hash(password).decode('utf-8')
-            user.birth_date = birth_date
-            db.session.commit()
-            return user
-        else:
-            raise ValueError(
-                f'User with id: {id} does not exist in the database'
-            )
+    else:
+        raise ValueError(
+            f'Invalid credentials for user with id: {current_user_id}'
+        )
 
-    except Exception as e:
-        logging.error(e)
-        return None
 
 
 def delete_user(id: int) -> User:

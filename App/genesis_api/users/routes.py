@@ -74,21 +74,18 @@ def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
         return generate_response(False, 'Could not get user', None, 500, str(e)), 500
 
 
-@user.route('/updateUser', methods=['PUT'])
+@user.route('/update_user_data', methods=['PUT'])
 @token_required
-def update_user(current_user: User) -> dict[str:str]:
+def update_user_endpoint(current_user: User) -> dict[str:str]:
     '''Update user information'''
     session = Session()
-    fields = {"name": str, "username": str, "email": str, "password": str,
-              "birth_date": str, "profile_id": int, "cedula": str}
-    args = parse_request("id", "name", "username",
-                         "email", "password", "birth_date")
-
-    if len(args) <= 1:
+    fields = {"name": str, "username": str, "email": str, "password": str, "birth_date": str}
+    args = parse_request(fields)
+    if len(args) == 0:
         return generate_response(False, 'No fields to update', None, 400), 400
 
     try:
-        user = update_user(session, current_user, **args)
+        user = update_user(session, current_user.id, **args)
         return generate_response(True, 'User data updated', get_user(user.id).to_dict(), 200), 200
     except Exception as e:
         return generate_response(False, 'Could not update user', None, 500, str(e)), 500

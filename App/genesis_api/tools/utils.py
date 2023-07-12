@@ -91,14 +91,16 @@ def parse_request(args_types: dict, location='json', required_args=None):
         required = arg in required_args if required_args else False
         parser.add_argument(arg, type=data_type,
                             location=location, required=required)
-
     try:
         args = parser.parse_args(strict=True)
+        # Remove any keys with value None
+        args = {key: value for key, value in args.items() if value is not None}
         return args
     except BadRequest as e:
         # Handle missing or incorrect arguments
         raise InvalidRequestParameters(
             f"Missing arguments or incorrect data types")
+
 
 
 def generate_response(success: bool, message: str, data: dict, status: int, error: str = None) -> dict:

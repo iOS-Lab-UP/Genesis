@@ -15,6 +15,7 @@ class BaseModel(db.Model):
         db.DateTime, nullable=False, default=datetime.utcnow)
     last_update = db.Column(db.DateTime, nullable=False,
                             default=datetime.utcnow, onupdate=datetime.utcnow)
+    
 
     def to_dict(self) -> dict:
         """
@@ -24,6 +25,17 @@ class BaseModel(db.Model):
             column.name: getattr(self, column.name)
             for column in self.__table__.columns
         }
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the model.
+        """
+        column_strings = []
+        for column, value in self.to_dict().items():
+            column_strings.append(f"{column}={value}")
+
+        return f"{self.__class__.__name__}({', '.join(column_strings)})"
+
+        
 
     @classmethod
     def get_data(cls, obj_id: int) -> object:
