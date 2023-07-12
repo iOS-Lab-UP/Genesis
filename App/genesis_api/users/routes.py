@@ -85,13 +85,13 @@ def update_user(current_user: User) -> dict[str:str]:
                          "email", "password", "birth_date")
 
     if len(args) <= 1:
-        return generate_response(False, 'No fields to update', None, 400)
+        return generate_response(False, 'No fields to update', None, 400), 400
 
     try:
         user = update_user(session, current_user, **args)
-        return generate_response(True, 'User data updated', get_user(user.id).to_dict(), 200)
+        return generate_response(True, 'User data updated', get_user(user.id).to_dict(), 200), 200
     except Exception as e:
-        return generate_response(False, 'Could not update user', None, 400, str(e))
+        return generate_response(False, 'Could not update user', None, 500, str(e)), 500
 
 
 @user.route('/deleteUser', methods=['DELETE'])
