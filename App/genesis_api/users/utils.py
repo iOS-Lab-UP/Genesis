@@ -1,5 +1,5 @@
 from genesis_api import db
-from genesis_api.models import User, Profile
+from genesis_api.models import User, Profile, VerificationCode
 from genesis_api.security import encodeJwtToken
 from genesis_api.tools.handlers import IncorrectCredentialsError, InvalidRequestParameters
 from genesis_api.tools.utils import *
@@ -7,8 +7,8 @@ from genesis_api.tools.utils import *
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
 from sqlalchemy.orm import close_all_sessions
-from random import random
 
+import random
 import logging
 import requests
 import string
@@ -187,9 +187,43 @@ def validate_doctor_identity(cedula: str, name: str) -> bool:
     return is_valid(response.json(), first_name, last_name1, last_name2, id_cedula)
 
 
-def generate_verification_code() -> str:
+def generate_verification_code(session: any, current_user_id: User) -> str:
     '''Generate verification code in order to generate verification code'''
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    try:
+        if not session.query(VerificationCode).filter(VerificationCode.user_id == current_user_id).first():
+            verificaton_code = VerificationCode(user_id=current_user_id, code=''.join(
+                ''.join(random.choice('0123456789') for _ in range(6))))
+            db.session.add(verificaton_code)
+            db.session.commit()
+        else:
+            verificaton_code = update_verification_code(
+                session, current_user_id)
+
+        return verificaton_code
+    except Exception as e:
+        logging.error(e)
+        raise
+
+
+def update_verification_code(session: any, user_id: User) -> str:
+    '''Update verification code associated to user_id in db'''
+    try:
+        verificaton_code = session.query(VerificationCode).filter(
+            VerificationCode.user_id == user_id).first()
+        if verificaton_code:
+            verificaton_code.code = ''.join(
+                random.choice('0123456789') for _ in range(6))
+            db.session.commit()
+            return verificaton_code
+
+        else:
+            raise ValueError(
+                f'Verification code for user with id: {user_id} does not exist in the database'
+            )
+
+    except Exception as e:
+        logging.error(e)
+        raise
 
 
 def send_verification_code(code: str, user_email: str) -> str:

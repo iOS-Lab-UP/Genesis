@@ -24,11 +24,31 @@ def sign_up_endpoint() -> dict[str:str]:
     try:
         args = parse_request(fields, 'json', required_fields)
         user = create_user(session, **args)
+        generate_verification_code(session, user['id'])
         return generate_response(True, 'User was successfully created', user, 201), 201
     except InvalidRequestParameters as e:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
     except Exception as e:
         return generate_response(False, 'Could not create user', None, 500, str(e)), 500
+    finally:
+        session.close()
+
+
+@user.route('/sign_up/verify_identity', methods=['POST'])
+@sql_injection_free
+def verify_identity_endpoint(current_user: User) -> dict[str:str]:
+    session = Session()
+    fields = {"code": str}
+    required_fields = ["code"]
+
+    try:
+        args = parse_request(fields, 'json', required_fields)
+        user = verify_identity(session, current_user.id, **args)
+        return generate_response(True, 'User was successfully verified', user, 201), 201
+    except InvalidRequestParameters as e:
+        return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
+    except Exception as e:
+        return generate_response(False, 'Could not verify user', None, 500, str(e)), 500
     finally:
         session.close()
 
@@ -75,6 +95,8 @@ def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
         return generate_response(True, f'User: {user.id}', user.to_dict(), 200), 200
     except Exception as e:
         return generate_response(False, 'Could not get user', None, 500, str(e)), 500
+    finally:
+        session.close()
 
 
 @user.route('/update_user_data', methods=['PUT'])

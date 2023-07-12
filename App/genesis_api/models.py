@@ -81,3 +81,23 @@ class Profile(BaseModel):
     """
     __tablename__ = 'PROFILE'
     profile = db.Column(db.String(255), nullable=False)
+
+class VerificationCode(BaseModel):
+    """
+    A model class that represents a verification code in the application.
+    """
+    __tablename__ = 'VERIFICATION_CODE'
+    code = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('USER.id'), nullable=False)
+
+    def expiry_code(self, id: str) -> None:
+        """
+        Expire the code and delete the registry from db (hard delete)
+        """
+        VerificationCode.query.filter_by(id=id).delete()
+
+    def resend_code(self, user_id: User) -> str:
+        """
+        Resend the code to the user
+        """
+        pass
