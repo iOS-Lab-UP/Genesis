@@ -7,10 +7,11 @@ from genesis_api.tools.utils import *
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
 from sqlalchemy.orm import close_all_sessions
-
+from random import random
 
 import logging
 import requests
+import string
 
 
 def create_user(session: any, name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
@@ -27,7 +28,7 @@ def create_user(session: any, name: str, username: str, email: str, password: st
 
     try:
         user = User(name=name, username=username, email=email, password_hash=generate_password_hash(
-            password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id, cedula=cedula)
+            password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id, cedula=cedula, status=0)
         session.add(user)
         session.commit()
 
@@ -82,8 +83,9 @@ def get_user(id: int) -> dict[str:str]:
         logging.error(e)
         return None
 
-def validate_user_data(session:any, user_data: User, profile_id: int, cedula: str) -> dict:
-    
+
+def validate_user_data(session: any, user_data: User, profile_id: int, cedula: str) -> dict:
+
     print(user_data)
     validated_data = {}
 
@@ -91,13 +93,16 @@ def validate_user_data(session:any, user_data: User, profile_id: int, cedula: st
         validated_data['name'] = user_data['name']
 
     if 'username' in user_data:
-        validated_data['username'] = user_data['username'] if is_username_valid(session, user_data['username']) else None
+        validated_data['username'] = user_data['username'] if is_username_valid(
+            session, user_data['username']) else None
 
     if 'email' in user_data:
-        validated_data['email'] = user_data['email'] if is_valid_email(session, user_data['email']) else None
+        validated_data['email'] = user_data['email'] if is_valid_email(
+            session, user_data['email']) else None
 
     if 'password' in user_data:
-        validated_data['password_hash'] = generate_password_hash(user_data['password']).decode('utf-8')
+        validated_data['password_hash'] = generate_password_hash(
+            user_data['password']).decode('utf-8')
 
     if 'birth_date' in user_data:
         validated_data['birth_date'] = user_data['birth_date']
@@ -110,16 +115,17 @@ def validate_user_data(session:any, user_data: User, profile_id: int, cedula: st
     return validated_data
 
 
-def update_user(session:any,current_user_id: int, **user_data: User) -> User:
+def update_user(session: any, current_user_id: int, **user_data: User) -> User:
     '''Update user function in order to update user's info from DB'''
-    
+
     user = session.query(User).filter(User.id == current_user_id).first()
     if user and user.check_password(user_data.get('password', '')):
-        validated_data = validate_user_data(session, user_data, user.profile_id, user.cedula)
+        validated_data = validate_user_data(
+            session, user_data, user.profile_id, user.cedula)
         for field, value in validated_data.items():
             if value is not None:
                 setattr(user, field, value)
-        
+
         session.commit()
         return user
 
@@ -127,7 +133,6 @@ def update_user(session:any,current_user_id: int, **user_data: User) -> User:
         raise ValueError(
             f'Invalid credentials for user with id: {current_user_id}'
         )
-
 
 
 def delete_user(id: int) -> User:
@@ -180,3 +185,13 @@ def validate_doctor_identity(cedula: str, name: str) -> bool:
         )
 
     return is_valid(response.json(), first_name, last_name1, last_name2, id_cedula)
+
+
+def generate_verification_code() -> str:
+    '''Generate verification code in order to generate verification code'''
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+
+def send_verification_code(code: str, user_email: str) -> str:
+    '''Send verification code in order to verify user'''
+    pass

@@ -1,0 +1,16 @@
+SET NAMES utf8mb4;
+
+DROP TABLE IF EXISTS `VERIFICATION_CODE`;
+
+CREATE TABLE
+    `VERIFICATION_CODE` (
+        `ID` int NOT NULL AUTO_INCREMENT,
+        `USER_ID` int NOT NULL,
+        `CODE` varchar(6) NOT NULL,
+        `STATUS` tinyint NOT NULL,
+        `CREATION_DATE` time NOT NULL,
+        `LAST_UPDATE` timestamp NOT NULL,
+        PRIMARY KEY (`ID`),
+        KEY `USER_ID` (`USER_ID`),
+        CONSTRAINT `VERIFICATION_CODE_ibfk_1` FOREIGN KEY (`USER_ID`) REFERENCES `USER` (`ID`)
+    ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;

@@ -34,6 +34,7 @@ def sign_up_endpoint() -> dict[str:str]:
 
 
 @user.route('/sign_in', methods=['POST'])
+@sql_injection_free
 def sign_in_endpoint() -> dict[str:str]:
     session = Session()
     try:
@@ -52,6 +53,7 @@ def sign_in_endpoint() -> dict[str:str]:
 
 @user.route('/sign_out', methods=['POST'])
 @token_required
+@sql_injection_free
 def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Sign out user'''
     session = Session()
@@ -64,6 +66,7 @@ def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
 
 @user.route('/get_user_data', methods=['GET'])
 @token_required
+@sql_injection_free
 def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Get user information'''
     try:
@@ -76,10 +79,12 @@ def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
 
 @user.route('/update_user_data', methods=['PUT'])
 @token_required
+@sql_injection_free
 def update_user_endpoint(current_user: User) -> dict[str:str]:
     '''Update user information'''
     session = Session()
-    fields = {"name": str, "username": str, "email": str, "password": str, "birth_date": str}
+    fields = {"name": str, "username": str,
+              "email": str, "password": str, "birth_date": str}
     args = parse_request(fields)
     if len(args) == 0:
         return generate_response(False, 'No fields to update', None, 400), 400
@@ -92,6 +97,7 @@ def update_user_endpoint(current_user: User) -> dict[str:str]:
 
 
 @user.route('/deleteUser', methods=['DELETE'])
+@sql_injection_free
 def delete_user() -> dict[str:str]:
     '''Delete user'''
     args = parse_request("id", data_type=int)
