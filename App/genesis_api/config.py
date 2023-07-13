@@ -25,3 +25,12 @@ class Config:
 
     # JWT Secret Key
     SECRET_KEY = secrets.token_hex(16)
+
+    # Mail Credentials
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", 'smtp.@gmail.com')
+    MAIL_PORT = os.environ.get("MAIL_PORT", '465')
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", 'False')
+    MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", 'True')
+    MAIL_EMAIL = os.environ.get(
+        "MAIL_EMAIL", 'namelessnoreply25@gmail.com')
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", 'dpivkcsjblqscusq')

@@ -17,3 +17,8 @@ class IncorrectCredentialsError(Exception):
 class InvalidUserInput(Exception):
     '''Custom Exception to handle invalid input from users.'''
     pass
+
+
+class InvalidVerificationCode(Exception):
+    '''Custom Exception to handle invalid verificaton codes from user'''
+    pass

@@ -16,7 +16,6 @@ class BaseModel(db.Model):
     last_update = db.Column(db.DateTime, nullable=False,
                             default=datetime.utcnow, onupdate=datetime.utcnow)
     
-
     def to_dict(self) -> dict:
         """
         Returns a dictionary representation of the model.
@@ -35,17 +34,16 @@ class BaseModel(db.Model):
 
         return f"{self.__class__.__name__}({', '.join(column_strings)})"
 
-        
-
     @classmethod
     def get_data(cls, obj_id: int) -> object:
         """
-        Retrieves an object by its ID.
+        Retrieves an object by its ID and status.
         """
         try:
-            return cls.query.get(obj_id)
+            return cls.query.filter_by(id=obj_id, status=True).first()
         except:
-            return None
+            return None 
+
 
 
 class User(BaseModel):
@@ -90,14 +88,9 @@ class VerificationCode(BaseModel):
     code = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('USER.id'), nullable=False)
 
-    def expiry_code(self, id: str) -> None:
+    def expire(self, session) -> None:
         """
-        Expire the code and delete the registry from db (hard delete)
+        Expire the code and delete the registry from the database (hard delete).
         """
-        VerificationCode.query.filter_by(id=id).delete()
 
-    def resend_code(self, user_id: User) -> str:
-        """
-        Resend the code to the user
-        """
-        pass
+        session.delete(self)

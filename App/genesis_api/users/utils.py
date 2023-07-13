@@ -1,17 +1,22 @@
 from genesis_api import db
 from genesis_api.models import User, Profile, VerificationCode
 from genesis_api.security import encodeJwtToken
-from genesis_api.tools.handlers import IncorrectCredentialsError, InvalidRequestParameters
+from genesis_api.tools.handlers import IncorrectCredentialsError, InvalidVerificationCode
 from genesis_api.tools.utils import *
+from genesis_api.config import Config
 
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
 from sqlalchemy.orm import close_all_sessions
+from smtplib import SMTPException
+from email.message import EmailMessage
 
 import random
 import logging
 import requests
 import string
+import ssl
+import smtplib
 
 
 def create_user(session: any, name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
@@ -21,7 +26,7 @@ def create_user(session: any, name: str, username: str, email: str, password: st
         raise InvalidRequestParameters(
             'User already exists in the database. Please try again with a different email or username.')
 
-    if cedula:
+    if cedula or profile_id == 2:
         if not validate_doctor_identity(cedula, name):
             raise ValueError(
                 'You could not be registered as a doctor because your identity could not be validated. Please try again with a different cedula.')
@@ -41,9 +46,6 @@ def create_user(session: any, name: str, username: str, email: str, password: st
         logging.error(e)
         raise
 
-    finally:
-        close_all_sessions()  # Close all open sessions
-
 
 def sign_in(session: any, username: str, password: str) -> User:
     '''Sign in function in order to authenticate user'''
@@ -62,10 +64,9 @@ def sign_in(session: any, username: str, password: str) -> User:
                 'The provided username or password is incorrect. Please try again.'
             )
     except Exception as e:
+        session.rollback()
         logging.error(e)
         raise
-    finally:
-        close_all_sessions()
 
 
 def sign_out(session: any, user_id: int) -> User:
@@ -86,7 +87,6 @@ def get_user(id: int) -> dict[str:str]:
 
 def validate_user_data(session: any, user_data: User, profile_id: int, cedula: str) -> dict:
 
-    print(user_data)
     validated_data = {}
 
     if 'name' in user_data:
@@ -201,6 +201,7 @@ def generate_verification_code(session: any, current_user_id: User) -> str:
 
         return verificaton_code
     except Exception as e:
+        session.rollback()
         logging.error(e)
         raise
 
@@ -222,10 +223,66 @@ def update_verification_code(session: any, user_id: User) -> str:
             )
 
     except Exception as e:
+        session.rollback()
         logging.error(e)
         raise
 
 
-def send_verification_code(code: str, user_email: str) -> str:
-    '''Send verification code in order to verify user'''
-    pass
+def send_verification_code(user: dict[User], code: str) -> None:
+    """Send a verification code to the given email."""
+    mail = EmailMessage()
+    mail['From'] = Config.MAIL_EMAIL
+    mail['To'] = user['email']
+    mail['Subject'] = 'Verification Code'
+    mail.add_header('Content-Type', 'text/html',)
+
+    html = f'''
+    <html>
+    <body>
+    <h2>Hello {user['name']}!</h2>
+
+    Your verification code is <b>{code}</b>.
+
+    Please enter this code to verify your account.
+
+    </body>
+    </html>
+    '''
+    mail.set_payload(html)
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', Config.MAIL_PORT, context=ssl.create_default_context()) as smtp:
+            smtp.login(mail['From'], Config.MAIL_PASSWORD)
+            smtp.sendmail(mail['From'], mail['To'],
+                          mail.as_string().encode('utf-8'))
+            smtp.quit()
+
+        print('Email sent!')
+    except SMTPException as e:
+        print('Error sending email: ', e)
+
+
+def verify_code(session: any, user_id: int, code: str) -> User:
+    '''Compare the user input code to the one in DB associated to him,
+        if they are equal, set user status to 1 else raise an error
+    '''
+    try:
+        verification_code = session.query(VerificationCode).\
+            filter(VerificationCode.user_id == user_id).\
+            filter(VerificationCode.code == code).first()
+        if not verification_code:
+            raise InvalidVerificationCode(
+                'Invalid verification code, resend it or input it again'
+            )
+        else:
+            user = session.query(User).filter(User.id == user_id).first()
+            user.status = True
+            session.add(user)  # Explicitly add changed user instance
+            verification_code.expire(session)
+            session.flush()  # Add this line to synchronize session's state with DB
+            session.commit()  # Ensure this is being called
+            return user
+    except Exception as e:
+        logging.error(e)
+        session.rollback()  # Rollback the session in case of error
+        raise
