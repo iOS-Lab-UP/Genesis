@@ -56,6 +56,20 @@ def verify_identity_endpoint(current_user: User) -> dict[str:str]:
     finally:
         session.close()
 
+@user.route('/sign_up/resend_verification_code', methods=['POST'])
+@token_required
+@sql_injection_free
+def resend_verification_code_endpoint(current_user: User) -> dict[str:str]:
+    session = Session()
+    try:
+        verification_code = generate_verification_code(session, current_user.id)
+        send_verification_code(current_user.to_dict(), verification_code.code)
+        return generate_response(True, 'Verification code was successfully sent', None, 200), 200
+    except Exception as e:
+        return generate_response(False, 'Could not send verification code', None, 500, str(e)), 500
+    finally:
+        session.close()
+
 
 @user.route('/sign_in', methods=['POST'])
 @sql_injection_free
@@ -75,6 +89,7 @@ def sign_in_endpoint() -> dict[str:str]:
         session.close()
 
 
+# TODO: Implement this endpoint
 @user.route('/sign_out', methods=['POST'])
 @token_required
 @sql_injection_free
@@ -101,8 +116,6 @@ def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
         return generate_response(True, f'User: {user.id}', user.to_dict(), 200), 200
     except Exception as e:
         return generate_response(False, 'Could not get user', None, 500, str(e)), 500
-    finally:
-        session.close()
 
 
 @user.route('/update_user_data', methods=['PUT'])
@@ -125,7 +138,7 @@ def update_user_endpoint(current_user: User) -> dict[str:str]:
     finally:
         session.close()
 
-
+# TODO: Need to finish this endpoint
 @user.route('/deleteUser', methods=['DELETE'])
 @sql_injection_free
 def delete_user() -> dict[str:str]:
@@ -139,3 +152,5 @@ def delete_user() -> dict[str:str]:
         return generate_response(False, 'Could not delete user', None, 400, str(e))
     finally:
         session.close()
+
+# TODO: Create endpoint to change user's password

@@ -28,7 +28,7 @@ def token_required(func) -> Callable:
                               Config.SECRET_KEY,
                               algorithms=['HS256'])
             # Get the user associated with the decoded data (assumed to be a user ID)
-            current_user = User.get_data(data['public_id'])
+            current_user = User.query.filter_by(id=data['public_id']).first()
             if not current_user:
                 return jsonify({'message': 'User not found!'}), 404
         except:

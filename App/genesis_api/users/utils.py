@@ -53,6 +53,7 @@ def sign_in(session: any, username: str, password: str) -> User:
     try:
         user = session.query(User).\
             filter(User.username == username).\
+            filter(User.status == 1).\
             first()
 
         if user and user.check_password(password):
@@ -214,7 +215,8 @@ def update_verification_code(session: any, user_id: User) -> str:
         if verificaton_code:
             verificaton_code.code = ''.join(
                 random.choice('0123456789') for _ in range(6))
-            db.session.commit()
+            
+            session.commit()
             return verificaton_code
 
         else:
@@ -270,7 +272,7 @@ def verify_code(session: any, user_id: int, code: str) -> User:
         verification_code = session.query(VerificationCode).\
             filter(VerificationCode.user_id == user_id).\
             filter(VerificationCode.code == code).first()
-        if not verification_code:
+        if not verification_code or verification_code.is_expired():
             raise InvalidVerificationCode(
                 'Invalid verification code, resend it or input it again'
             )

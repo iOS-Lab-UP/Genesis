@@ -1,8 +1,8 @@
 from genesis_api import db
-from datetime import datetime
+
 from sqlalchemy import Index
 from flask_bcrypt  import check_password_hash
-
+from datetime import datetime, timedelta
 
 class BaseModel(db.Model):
     """
@@ -94,3 +94,11 @@ class VerificationCode(BaseModel):
         """
 
         session.delete(self)
+
+
+    def is_expired(self) -> bool:
+        """
+        Check if the code is expired.
+        The code is considered expired if it's more than 10 minutes old.
+        """
+        return datetime.utcnow() - self.created_at > timedelta(minutes=10)
