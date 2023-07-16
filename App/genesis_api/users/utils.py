@@ -7,14 +7,12 @@ from genesis_api.config import Config
 
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
-from sqlalchemy.orm import close_all_sessions
 from smtplib import SMTPException
 from email.message import EmailMessage
 
 import random
 import logging
 import requests
-import string
 import ssl
 import smtplib
 
