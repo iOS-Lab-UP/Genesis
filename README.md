@@ -2,6 +2,64 @@
 
 Welcome to the Genesis-API project! This guide will help you understand how to create a new endpoint and how to create a SQL table in the project.
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Running the Project](#running-the-project)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Contribution Guidelines](#contribution-guidelines)
+- [License](#license)
+- [Contact](#contact)
+
+## Installation
+
+To install the project, clone the repository to your local machine:
+
+```bash
+git clone https://github.com/iOS-Lab-UP/Genesis-API.git
+```
+
+## Running the Project
+
+### Prerequisites
+
+Before you can run the project, you must have Docker installed on your machine. Docker is used to create a containerized environment for the application.
+
+1. **First Time Setup**: The first time you run the project, you'll need to build the Docker images. Use the following command:
+
+```sh
+docker-compose up --build
+```
+
+2. **Normal Run**: After the first time, you can start the application with the following command:
+
+```sh
+docker-compose up
+```
+
+3. **Shutting Down**: To stop the application and remove the containers, networks, and volumes defined in `docker-compose.yml`, use the following command:
+
+```sh
+docker-compose down -v
+```
+
+## Testing
+
+The project has an endpoint called health_check if you send a GET request to this endpoint you will get a response with the status of the application similar to this:
+
+```json
+{
+	"cpu_usage": "5.3%",
+	"date": "2023-03-07 00:27:00",
+	"memory_usage": "17.0%",
+	"message": "Server is up and running",
+	"port": 5555,
+	"status": "OK",
+	"uptime": "1.76 days"
+}
+```
+
 ## Project Structure
 
 The main application is located in the `App` directory, specifically in the `genesis_api` subdirectory. Here's a brief overview of the important files and directories:
@@ -14,27 +72,6 @@ The main application is located in the `App` directory, specifically in the `gen
 - `users`: This directory contains routes and utilities related to user management.
 
 The SQL scripts for database initialization and table creation are located in the `sql` directory.
-
-## Prerequisites
-
-Before you can run the project, you must have Docker installed on your machine. Docker is used to create a containerized environment for the application.
-
-## Running the Project
-
-1. **First Time Setup**: The first time you run the project, you'll need to build the Docker images. Use the following command:
-
-docker-compose up --build
-
-
-2. **Normal Run**: After the first time, you can start the application with the following command:
-
-First Time Setup: The first time you run the project, you'll need to build the Docker images. Use the following command:
-
-docker-compose up
-
-3. **Shutting Down**: To stop the application and remove the containers, networks, and volumes defined in `docker-compose.yml`, use the following command:
-
-docker-compose down -v
 
 ## Creating a New Endpoint
 
