@@ -7,7 +7,6 @@
 *.pyc
 *.pyo
 *.pyd
-.env
 *.log
 .dockerignore
 Dockerfile
