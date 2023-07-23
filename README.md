@@ -2,6 +2,22 @@
 
 Welcome to the Genesis-API project! This guide will help you understand how to create a new endpoint and how to create a SQL table in the project.
 
+
+Genesis-API is a project designed to provide a simple CRUD (Create, Read, Update, Delete) system that allows doctors to register to the application by introducing their CEDULAS. The system then sends a request to the gob.mx API to verify the authenticity of the doctor. Once verified, the doctor is granted access to the companion app in Swift (currently unreleased).
+
+This project is intended for both doctors, for identity verification and access, and patients, for usage.
+
+## Key Features
+
+- Verify doctor identity using gob.mx API
+- Allow patients to use the application
+- Two-factor authentication for enhanced security
+- MySQL for database management
+- Docker for easy deployment and distribution
+
+Welcome to the Genesis-API project! This guide will help you understand how to create a new endpoint and how to create a SQL table in the project.
+
+
 ## Table of Contents
 
 - [Installation](#installation)
