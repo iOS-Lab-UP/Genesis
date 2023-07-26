@@ -101,5 +101,5 @@ class VerificationCode(BaseModel):
         Check if the code is expired.
         The code is considered expired if it's more than 10 minutes old.
         """
-        expiration_threshold = self.creation_date + timedelta(minutes=10)
+        expiration_threshold = self.last_update + timedelta(minutes=5)
         return datetime.utcnow() > expiration_threshold

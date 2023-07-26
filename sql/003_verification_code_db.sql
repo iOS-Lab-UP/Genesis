@@ -8,7 +8,7 @@ CREATE TABLE
         `USER_ID` int NOT NULL,
         `CODE` varchar(6) NOT NULL,
         `STATUS` tinyint NOT NULL,
-        `CREATION_DATE` time NOT NULL,
+        `CREATION_DATE` date NOT NULL,
         `LAST_UPDATE` timestamp NOT NULL,
         PRIMARY KEY (`ID`),
         KEY `USER_ID` (`USER_ID`),
