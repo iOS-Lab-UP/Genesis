@@ -56,7 +56,7 @@ def verify_identity_endpoint(current_user: User) -> dict[str:str]:
     finally:
         session.close()
 
-@user.route('/sign_up/resend_verification_code', methods=['POST'])
+@user.route('/sign_up/resend_verification_code', methods=['GET'])
 @token_required
 @sql_injection_free
 def resend_verification_code_endpoint(current_user: User) -> dict[str:str]:
