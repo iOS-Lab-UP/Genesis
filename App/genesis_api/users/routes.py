@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from genesis_api.tools.handlers import *
 from genesis_api.users.utils import *
 from genesis_api.tools.utils import parse_request, generate_response
-from genesis_api.security import token_required, sql_injection_free
+from genesis_api.security import *
 from genesis_api import db
 
 user = Blueprint('user', __name__)
@@ -58,8 +58,8 @@ def verify_identity_endpoint(current_user: User) -> dict[str:str]:
 
 @user.route('/sign_up/resend_verification_code', methods=['GET'])
 @token_required
-@sql_injection_free
 def resend_verification_code_endpoint(current_user: User) -> dict[str:str]:
+    
     session = Session()
     try:
         verification_code = generate_verification_code(session, current_user.id)
@@ -107,7 +107,6 @@ def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
 
 @user.route('/get_user_data', methods=['GET'])
 @token_required
-@sql_injection_free
 def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Get user information'''
     try:

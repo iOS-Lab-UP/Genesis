@@ -6,6 +6,7 @@ from flask import request, jsonify
 from genesis_api.tools.utils import color
 from genesis_api import Config
 from genesis_api.models import User
+from genesis_api.tools.handlers import *
 
 import logging
 import jwt
@@ -65,6 +66,26 @@ def encodeJwtToken(user: dict[str, str]) -> dict[str, str]:
         token = None
 
     return token
+
+def get_jwt_identity():
+    '''Extracts the public_id (user_id) from the JWT token in the current request.'''
+    token = None
+    # Check if token is in the headers
+    if 'x-access-token' in request.headers:
+        token = request.headers['x-access-token']
+
+    # If no token is found, return None
+    if not token:
+        raise IncorrectCredentialsError('Token is missing!')
+
+    try:
+        # Decode the token to get user data
+        data = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
+        # Return the public_id from the decoded data
+        return data['public_id']
+    except Exception as e:
+        print(e)
+        return None
 
 
 def sql_injection_free(func):
