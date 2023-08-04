@@ -29,7 +29,9 @@ def create_app(config_class=Config):
     app.app_context().push()
 
     from genesis_api.users.routes import user
+    from genesis_api.image_classifier.routes import image_classifier
 
     app.register_blueprint(user)
+    app.register_blueprint(image_classifier)
 
     return app

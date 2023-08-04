@@ -34,3 +34,12 @@ class Config:
     MAIL_EMAIL = os.environ.get(
         "MAIL_EMAIL", 'namelessnoreply25@gmail.com')
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", 'dpivkcsjblqscusq')
+
+
+    # URL for uploading pdfs
+    UPLOAD_FOLDER = os.environ.get(
+        "UPLOAD_FOLDER", 'App/genesis_api/static/uploads')
+
+    # check if the folder exists
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
