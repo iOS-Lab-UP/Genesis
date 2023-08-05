@@ -161,3 +161,7 @@ cython_debug/
 
 # env file
 .env
+
+
+# uploads
+genesis_api/static/uploads/

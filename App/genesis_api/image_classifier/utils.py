@@ -5,7 +5,7 @@ from genesis_api.models import User, Image, UserImage
 
 import os
 
-def save_image(user, image_file):
+def save_image(user, image_file, element, precision):
     # Define the image directory
     image_directory = Config.UPLOAD_FOLDER
 
@@ -23,7 +23,7 @@ def save_image(user, image_file):
 
     # Create a new UserImage record
     user_image = UserImage(user_id=user.id, image_id=new_image.id,
-                           element="some_element", precision=0.14)
+                           element=element, precision=precision)
 
     # Add the new UserImage to the database
     db.session.add(user_image)
@@ -33,5 +33,5 @@ def save_image(user, image_file):
 
 
 def allowed_file(filename: str) -> bool:
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

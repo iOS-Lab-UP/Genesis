@@ -6,6 +6,7 @@ from datetime import datetime
 from genesis_api import db
 from flask_restful import reqparse
 from werkzeug.exceptions import BadRequest
+from werkzeug.datastructures import FileStorage
 from email_validator import validate_email, EmailNotValidError
 
 import psutil
@@ -85,12 +86,15 @@ def writeHTMLFile(rows: list) -> None:
         f.write("\n</body>\n</html>")
 
 
-def parse_request(args_types: dict, location='json', required_args=None):
+def parse_request(args_types: dict, location='json', required_args=None, allow_files=False):
     parser = reqparse.RequestParser(bundle_errors=True)
     for arg, data_type in args_types.items():
         required = arg in required_args if required_args else False
-        parser.add_argument(arg, type=data_type,
-                            location=location, required=required)
+        if data_type == FileStorage and allow_files:
+            # If the data_type is FileStorage and files are allowed, set the location to 'files'
+            location = 'files'
+        parser.add_argument(arg, type=data_type, location=location, required=required)
+
     try:
         args = parser.parse_args(strict=True)
         # Remove any keys with value None
@@ -98,9 +102,7 @@ def parse_request(args_types: dict, location='json', required_args=None):
         return args
     except BadRequest as e:
         # Handle missing or incorrect arguments
-        raise InvalidRequestParameters(
-            f"Missing arguments or incorrect data types")
-
+        raise InvalidRequestParameters("Missing arguments or incorrect data types")
 
 
 def generate_response(success: bool, message: str, data: dict, status: int, error: str = None) -> dict:
