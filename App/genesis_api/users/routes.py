@@ -186,3 +186,15 @@ def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:s
     finally:
         session.close()
 
+
+@user.route('/get_doctor_patient_files', methods=['GET'])
+@token_required
+def get_doctor_patient_files_endpoint(current_user: User) -> dict[str:str]:
+    session = Session()
+    try:
+        files = get_doctor_patient_files(session, current_user.id)
+        return generate_response(True, 'Files retrieved', files, 200), 200
+    except Exception as e:
+        return generate_response(False, 'Could not get files', None, 500, str(e)), 500
+    finally:
+        session.close()

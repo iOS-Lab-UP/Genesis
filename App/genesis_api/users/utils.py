@@ -1,5 +1,5 @@
 from genesis_api import db
-from genesis_api.models import User, Profile, VerificationCode, DoctorPatientAssociation
+from genesis_api.models import User, Profile, VerificationCode, DoctorPatientAssociation, UserImage, Image
 from genesis_api.security import encodeJwtToken
 from genesis_api.tools.handlers import *
 from genesis_api.tools.utils import *
@@ -317,8 +317,25 @@ def get_patients(session: any) -> list[User]:
         session.rollback()
         raise
 
-    # patients = session.query(User).\
-    #     join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
-    #     filter(DoctorPatientAssociation.doctor_id == doctor_id).\
-    #     all()
+
+
+def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
+    """ Get all the images associated with a doctor and a patient """
+
+    # Get all the patients associated with the doctor
+    patients = session.query(User).\
+        join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
+        filter(DoctorPatientAssociation.doctor_id == doctor_id).\
+        all()
     
+    print(patients)
+
+    # Get all the images associated with each patient
+    images = []
+    for patient in patients:
+        patient_images = session.query(UserImage).\
+            filter(UserImage.user_id == patient.id).\
+            all()
+        images.extend(patient_images)
+
+    return [image.to_dict() for image in images]
