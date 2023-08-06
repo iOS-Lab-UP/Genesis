@@ -172,8 +172,8 @@ def get_patients_endpoint(current_user: User) -> dict[str:str]:
 @sql_injection_free
 def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:str]:
     session = Session()
-    fields = {"patient_id": int}
-    required_fields = ["patient_id"]
+    fields = {"patient_username": str}
+    required_fields = ["patient_username"]
 
     try:
         args = parse_request(fields, 'json', required_fields)

@@ -288,10 +288,10 @@ def verify_code(session: any, user_id: int, code: str) -> User:
         raise
 
 
-def create_doctor_patient_association(session: any, doctor_id: int, patient_id: int) -> str:
+def create_doctor_patient_association(session: any, doctor_id: int, patient_username: int) -> str:
     """ Register an association between a doctor and a patient """
     
-    print(doctor_id, patient_id)
+    patient_id = session.query(User).filter_by(username=patient_username).first().id
 
     # Check if an association already exists
     existing_association = session.query(DoctorPatientAssociation).\
