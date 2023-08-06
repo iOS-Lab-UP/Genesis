@@ -301,9 +301,9 @@ def create_doctor_patient_association(session: any, doctor_id: int, patient_id: 
         raise RelationshipAlreadyExistsError("The relationship already exists")
     
     # Create a new association
-    association = DoctorPatientAssociation(doctor_id, patient_id)
-    db.add(association)
-    db.commit()
+    association = DoctorPatientAssociation(doctor_id=doctor_id, patient_id=patient_id)
+    session.add(association)
+    session.commit()
 
 
 def get_patients(session: any) -> list[User]:

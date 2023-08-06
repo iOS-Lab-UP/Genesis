@@ -177,7 +177,7 @@ def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:s
 
     try:
         args = parse_request(fields, 'json', required_fields)
-        association = create_doctor_patient_association(session, current_user.id **args)
+        association = create_doctor_patient_association(session, current_user.id, **args)
         return generate_response(True, 'Association created', association, 201), 201
     except InvalidRequestParameters as e:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400

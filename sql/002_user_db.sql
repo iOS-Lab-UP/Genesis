@@ -36,7 +36,7 @@ CREATE TABLE `DOCTOR_PATIENT_ASSOCIATION` (
   `ID` int NOT NULL AUTO_INCREMENT COMMENT 'Unique identifier for each doctor-patient association',
   `DOCTOR_ID` int NOT NULL COMMENT 'ID of the doctor',
   `PATIENT_ID` int NOT NULL COMMENT 'ID of the patient',
-  `STATUS` time NOT NULL COMMENT 'Status of the association',
+  `STATUS` tinyint NOT NULL DEFAULT '0' COMMENT 'Status of the Association',
   `CREATION_DATE` time NOT NULL COMMENT 'Date when the association was created',
   `LAST_UPDATE` timestamp NOT NULL COMMENT 'Date and time when the association was last updated',
   PRIMARY KEY (`ID`),
