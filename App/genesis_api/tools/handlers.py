@@ -22,3 +22,8 @@ class InvalidUserInput(Exception):
 class InvalidVerificationCode(Exception):
     '''Custom Exception to handle invalid verificaton codes from user'''
     pass
+
+
+class RelationshipAlreadyExistsError(Exception):
+    '''Custom Exception to handle relationship already existing in DB'''
+    pass

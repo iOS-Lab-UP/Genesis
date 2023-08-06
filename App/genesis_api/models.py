@@ -64,6 +64,10 @@ class User(BaseModel):
     cedula = db.Column(db.String(255), nullable=True)
     profile_id = db.Column(db.Integer, db.ForeignKey('PROFILE.id'), nullable=False)
 
+     # Relationships
+    patients = db.relationship('DoctorPatientAssociation', back_populates='doctor', foreign_keys='DoctorPatientAssociation.doctor_id')
+    doctor = db.relationship('DoctorPatientAssociation', back_populates='patient', uselist=False, foreign_keys='DoctorPatientAssociation.patient_id')
+
 
     def check_password(self, password: str) -> bool:
         """
@@ -125,5 +129,18 @@ class UserImage(BaseModel):
     image = db.relationship('Image', backref='user_image', lazy=True)
     user = db.relationship('User', backref='user_image', lazy=True)
     element = db.Column(db.String(255), nullable=False)
-    precision = db.Column(db.String(255), nullable=False)
+    precision = db.Column(db.Float, nullable=False)
 
+
+
+class DoctorPatientAssociation(BaseModel):
+    """
+    A model class that represents the association between doctors and patients.
+    """
+    __tablename__ = 'DOCTOR_PATIENT_ASSOCIATION'
+    doctor_id = db.Column(db.Integer, db.ForeignKey('USER.id'), primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('USER.id'), primary_key=True)
+
+    # Relationships
+    doctor = db.relationship("User", foreign_keys=[doctor_id])
+    patient = db.relationship("User", foreign_keys=[patient_id])

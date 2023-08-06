@@ -64,7 +64,6 @@ def get_image_data(id: int) -> dict[str:str]:
     # Retrieve the Image record
 
     try:
-        print(id)
         return Image.get_data(id)
     except Exception as e:
         logging.error(e)

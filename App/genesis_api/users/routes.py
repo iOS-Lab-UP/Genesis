@@ -153,3 +153,36 @@ def delete_user() -> dict[str:str]:
         session.close()
 
 # TODO: Create endpoint to change user's password
+
+
+@user.route('/get_patients', methods=['GET'])
+@token_required
+def get_patients_endpoint(current_user: User) -> dict[str:str]:
+    session = Session()
+    try:
+        patients = get_patients(session)
+        return generate_response(True, 'Patients retrieved', patients, 200), 200
+    except Exception as e:
+        return generate_response(False, 'Could not get patients', None, 500, str(e)), 500
+    finally:
+        session.close()
+
+@user.route('/create_doctor_patient_association', methods=['POST'])
+@token_required
+@sql_injection_free
+def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:str]:
+    session = Session()
+    fields = {"patient_id": int}
+    required_fields = ["patient_id"]
+
+    try:
+        args = parse_request(fields, 'json', required_fields)
+        association = create_doctor_patient_association(session, current_user.id **args)
+        return generate_response(True, 'Association created', association, 201), 201
+    except InvalidRequestParameters as e:
+        return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
+    except Exception as e:
+        return generate_response(False, 'Could not create association', None, 500, str(e)), 500
+    finally:
+        session.close()
+

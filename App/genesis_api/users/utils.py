@@ -1,7 +1,7 @@
 from genesis_api import db
-from genesis_api.models import User, Profile, VerificationCode
+from genesis_api.models import User, Profile, VerificationCode, DoctorPatientAssociation
 from genesis_api.security import encodeJwtToken
-from genesis_api.tools.handlers import IncorrectCredentialsError, InvalidVerificationCode
+from genesis_api.tools.handlers import *
 from genesis_api.tools.utils import *
 from genesis_api.config import Config
 
@@ -191,7 +191,7 @@ def generate_verification_code(session: any, current_user_id: User) -> str:
     try:
         if not session.query(VerificationCode).filter(VerificationCode.user_id == current_user_id).first():
             verificaton_code = VerificationCode(user_id=current_user_id, code=''.join(
-                ''.join(random.choice('0123456789') for _ in range(6))))
+                ''.join(random.choice('0123456789') for _ in range(5))))
             db.session.add(verificaton_code)
             db.session.commit()
         else:
@@ -212,7 +212,7 @@ def update_verification_code(session: any, user_id: User) -> str:
             VerificationCode.user_id == user_id).first()
         if verificaton_code:
             verificaton_code.code = ''.join(
-                random.choice('0123456789') for _ in range(6))
+                random.choice('0123456789') for _ in range(5))
             
             session.commit()
             return verificaton_code
@@ -286,3 +286,39 @@ def verify_code(session: any, user_id: int, code: str) -> User:
         logging.error(e)
         session.rollback()  # Rollback the session in case of error
         raise
+
+
+def create_doctor_patient_association(session: any, doctor_id: int, patient_id: int) -> str:
+    """ Register an association between a doctor and a patient """
+    
+    print(doctor_id, patient_id)
+
+    # Check if an association already exists
+    existing_association = session.query(DoctorPatientAssociation).\
+        filter_by(doctor_id=doctor_id, patient_id=patient_id).first()
+    
+    if existing_association:
+        raise RelationshipAlreadyExistsError("The relationship already exists")
+    
+    # Create a new association
+    association = DoctorPatientAssociation(doctor_id, patient_id)
+    db.add(association)
+    db.commit()
+
+
+def get_patients(session: any) -> list[User]:
+    """ Get all the patients associated with a doctor """
+    try:
+
+        patients = [patient.to_dict() for patient in session.query(User).filter_by(profile_id=1).all()]
+        return patients
+    except Exception as e:
+        logging.error(e)
+        session.rollback()
+        raise
+
+    # patients = session.query(User).\
+    #     join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
+    #     filter(DoctorPatientAssociation.doctor_id == doctor_id).\
+    #     all()
+    

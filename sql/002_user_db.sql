@@ -27,3 +27,28 @@ CREATE TABLE `USER` (
   KEY `PROFILE_ID` (`PROFILE_ID`),
   CONSTRAINT `USER_ibfk_1` FOREIGN KEY (`PROFILE_ID`) REFERENCES `PROFILE` (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table containing user information';
+
+
+DROP TABLE IF EXISTS `DOCTOR_PATIENT_ASSOCIATION`;
+
+-- Create the DOCTOR_PATIENT_ASSOCIATION table
+CREATE TABLE `DOCTOR_PATIENT_ASSOCIATION` (
+  `ID` int NOT NULL AUTO_INCREMENT COMMENT 'Unique identifier for each doctor-patient association',
+  `DOCTOR_ID` int NOT NULL COMMENT 'ID of the doctor',
+  `PATIENT_ID` int NOT NULL COMMENT 'ID of the patient',
+  `STATUS` time NOT NULL COMMENT 'Status of the association',
+  `CREATION_DATE` time NOT NULL COMMENT 'Date when the association was created',
+  `LAST_UPDATE` timestamp NOT NULL COMMENT 'Date and time when the association was last updated',
+  PRIMARY KEY (`ID`),
+  KEY `DOCTOR_ID` (`DOCTOR_ID`),
+  KEY `PATIENT_ID` (`PATIENT_ID`),
+  CONSTRAINT `DOCTOR_PATIENT_ASSOCIATION_ibfk_1` FOREIGN KEY (`DOCTOR_ID`) REFERENCES `USER` (`ID`),
+  CONSTRAINT `DOCTOR_PATIENT_ASSOCIATION_ibfk_2` FOREIGN KEY (`PATIENT_ID`) REFERENCES `USER` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Table containing doctor-patient association information';
+
+
+
+
+
+
+
