@@ -45,3 +45,47 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
         return generate_response(True, 'Image successfully uploaded', user_image.to_dict(), 201), 201
     else:
         return generate_response(False, 'File type not allowed', None, 400), 400
+
+
+
+@image_classifier.route('/get_user_images', methods=['GET'])
+@token_required
+def get_user_images_endpoint(current_user: User) -> dict[str:str]:
+    try:
+        # Retrieve the user
+        if not current_user:
+            return generate_response(False, 'User not found', None, 404), 404
+
+        # Get all UserImage records for this user
+        user_images = UserImage.query.filter_by(user_id=current_user.id).all()
+
+        # Extract the image IDs
+        image_data = []
+        for user_image in user_images:
+            image_info = get_image_data(user_image.image_id)
+            if image_info is None:
+                return generate_response(False, 'Error retrieving image data', None, 500), 500
+            image_data.append(image_info.to_dict())
+
+        # Return the image data
+        return generate_response(True, 'Image data successfully retrieved', {'images': image_data}, 200)
+    except Exception as e:
+        return generate_response(False, str(e), None, 500), 500
+
+
+
+@image_classifier.route('/get_image/<image_id>', methods=['GET'])
+@token_required
+def get_image_endpoint(current_user: User, image_id: int) -> dict[str:str]:
+    # Retrieve the user
+    if not current_user:
+        return generate_response(False, 'User not found', None, 404), 404
+
+    # Get the image
+    image, error = get_image(current_user, image_id)
+
+    if error:
+        return generate_response(False, error, None, 404), 404
+
+    # Return the encoded image
+    return generate_response(True, 'Image successfully retrieved', {'image': image}, 200)
