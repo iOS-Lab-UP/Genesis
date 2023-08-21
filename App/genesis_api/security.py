@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Callable
 from flask import request, jsonify
 
+
 from genesis_api.tools.utils import color
 from genesis_api import Config
 from genesis_api.models import User
@@ -11,10 +12,8 @@ from genesis_api.tools.handlers import *
 import logging
 import jwt
 import traceback
-import re
 
-
-def token_required(func) -> Callable:
+def token_required(func):
     '''Decorator to check if the user has a valid token'''
     @wraps(func)
     def decorator(*args, **kwargs):
@@ -28,17 +27,28 @@ def token_required(func) -> Callable:
             data = jwt.decode(token,
                               Config.SECRET_KEY,
                               algorithms=['HS256'])
+            
+            # Check if the token has expired
+            current_time = datetime.utcnow()
+            print( current_time)
+            if 'exp' in data and data['exp'] < current_time:
+                return jsonify({'message': 'Token has expired!'}), 401
+            
             # Get the user associated with the decoded data (assumed to be a user ID)
             current_user = User.query.filter_by(id=data['public_id']).first()
             if not current_user:
                 return jsonify({'message': 'User not found!'}), 404
-        except:
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.DecodeError:
             return jsonify({'message': 'Token is invalid!'}), 401
 
         # Call the decorated function with the current_user argument
         return func(current_user, *args, **kwargs)
 
     return decorator
+
+
 
 
 def encodeJwtToken(user: dict[str, str]) -> dict[str, str]:
@@ -87,6 +97,14 @@ def get_jwt_identity():
         print(e)
         return None
 
+def expire_token(user_id: int) -> None:
+    '''Expires a user's token by modifying the date'''
+    user = User.query.filter_by(id=user_id).first()
+    if user:
+        user.token_expiration = datetime.utcnow()
+        user.save()
+    else:
+        raise UserNotFoundError('User not found!')
 
 def sql_injection_free(func):
     """Decorator to check if incoming JSON data is free from SQL injection attempts."""

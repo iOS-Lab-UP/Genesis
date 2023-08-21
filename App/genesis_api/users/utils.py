@@ -1,6 +1,6 @@
 from genesis_api import db
 from genesis_api.models import User, Profile, VerificationCode, DoctorPatientAssociation, UserImage, Image
-from genesis_api.security import encodeJwtToken
+from genesis_api.security import encodeJwtToken, expire_token
 from genesis_api.tools.handlers import *
 from genesis_api.tools.utils import *
 from genesis_api.config import Config
@@ -70,8 +70,12 @@ def sign_in(session: any, username: str, password: str) -> User:
 
 def sign_out(session: any, user_id: int) -> User:
     '''Sign out function in order to sign out user'''
-    # TODO: expire the jwt token
-    pass
+    try:
+        expire_token(user_id)
+    except Exception as e:
+        session.rollback()
+        logging.error(e)
+
 
 
 def get_user(id: int) -> dict[str:str]:
@@ -248,18 +252,24 @@ def send_verification_code(user: dict[User], code: str) -> None:
     </body>
     </html>
     '''
+    send_email(mail, html)
+
+def send_email(mail, html):
     mail.set_payload(html)
+    context = ssl.create_default_context()
 
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', Config.MAIL_PORT, context=ssl.create_default_context()) as smtp:
-            smtp.login(mail['From'], Config.MAIL_PASSWORD)
+        with smtplib.SMTP('smtp.gmail.com', Config.MAIL_PORT) as smtp:
+            smtp.ehlo()  # Can be omitted
+            smtp.starttls(context=context)
+            smtp.ehlo()  # Can be omitted
+            smtp.login(Config.MAIL_EMAIL, Config.MAIL_PASSWORD)
             smtp.sendmail(mail['From'], mail['To'],
                           mail.as_string().encode('utf-8'))
             smtp.quit()
-
-        print('Email sent!')
-    except SMTPException as e:
-        print('Error sending email: ', e)
+        
+    except smtplib.SMTPException as e:
+        logging.error('Error sending email: %s', e)
 
 
 def verify_code(session: any, user_id: int, code: str) -> User:

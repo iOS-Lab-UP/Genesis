@@ -27,3 +27,7 @@ class InvalidVerificationCode(Exception):
 class RelationshipAlreadyExistsError(Exception):
     '''Custom Exception to handle relationship already existing in DB'''
     pass
+
+class UserNotFoundError(Exception):
+    '''Custom Exception to handle user not found in DB'''
+    pass

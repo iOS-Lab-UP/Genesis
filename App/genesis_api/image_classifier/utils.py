@@ -1,7 +1,7 @@
 from genesis_api import db
 from genesis_api.config import Config
 from werkzeug.utils import secure_filename
-from genesis_api.models import User, Image, UserImage
+from genesis_api.models import *
 
 import base64
 from flask import send_from_directory
@@ -68,3 +68,25 @@ def get_image_data(id: int) -> dict[str:str]:
     except Exception as e:
         logging.error(e)
         return None
+    
+
+def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
+    """ Get all the images associated with a doctor and a patient """
+
+    # Get all the patients associated with the doctor
+    patients = session.query(User).\
+        join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
+        filter(DoctorPatientAssociation.doctor_id == doctor_id).\
+        all()
+    
+    print(patients)
+
+    # Get all the images associated with each patient
+    images = []
+    for patient in patients:
+        patient_images = session.query(UserImage).\
+            filter(UserImage.user_id == patient.id).\
+            all()
+        images.extend(patient_images)
+
+    return [image.to_dict() for image in images]
