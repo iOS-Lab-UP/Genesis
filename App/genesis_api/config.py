@@ -36,7 +36,7 @@ class Config:
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 
     # URL for redis
-    RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", 'redis://localhost:6379/0')
+    RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", 'redis://redis:6379/0')
 
     # URL for uploading pdfs
     UPLOAD_FOLDER = os.environ.get(

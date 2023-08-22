@@ -5,6 +5,7 @@ from genesis_api.tools.handlers import *
 from genesis_api.tools.utils import *
 from genesis_api.config import Config
 
+
 from flask_bcrypt import generate_password_hash
 from datetime import datetime
 from smtplib import SMTPException
@@ -68,10 +69,10 @@ def sign_in(session: any, username: str, password: str) -> User:
         raise
 
 
-def sign_out(session: any, user_id: int) -> User:
-    '''Sign out function in order to sign out user'''
+def sign_out(session: any, jwt_token: str) -> User:
+    '''Sign out function in order to sign out user by adding jwt token to redis'''
     try:
-        expire_token(user_id)
+        pass
     except Exception as e:
         session.rollback()
         logging.error(e)

@@ -5,9 +5,12 @@ from genesis_api.users.utils import *
 from genesis_api.tools.utils import parse_request, generate_response
 from genesis_api.security import *
 from genesis_api import db
+import redis
+
 
 user = Blueprint('user', __name__)
 Session = sessionmaker(bind=db.engine)
+redis_client = redis.StrictRedis(host='redis', port=6379, decode_responses=True)
 
 
 @user.route('/sign_up', methods=['POST'])
@@ -94,9 +97,12 @@ def sign_in_endpoint() -> dict[str:str]:
 @token_required
 def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Sign out user'''
+
+
+
     session = Session()
     try:
-        sign_out(session, current_user.id)
+        sign_out(session,request.headers['x-access-token'])
         return generate_response(True, 'User was successfully signed out', None, 200), 200
     except Exception as e:
         return generate_response(False, 'Could not sign out user', None, 500, str(e)), 500
@@ -186,3 +192,13 @@ def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:s
         session.close()
 
 
+
+@user.route('/redis', methods=['GET'])
+def redis_endpoint() -> dict[str:str]:
+    try:
+        redis_client.set('greeting', 'Hello, Redis!')
+        greeting = redis_client.get('greeting')
+        print(greeting)
+        return generate_response(True, "", None, 200), 200
+    except Exception as e:
+        return generate_response(False, 'Redis is not working', None, 500, str(e)), 500
