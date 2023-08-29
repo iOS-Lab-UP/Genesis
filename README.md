@@ -15,7 +15,7 @@ This project is intended for both doctors, for identity verification and access,
 - MySQL for database management
 - Docker for easy deployment and distribution
 
-Welcome to the Genesis-API project! This guide will help you understand how to create a new endpoint and how to create a SQL table in the project.
+Welcome to the Genesis-API project! This guide will help you understand how to create a new endpoint and how to create a SQL table in the project
 
 
 ## Table of Contents
