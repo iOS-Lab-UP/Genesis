@@ -4,16 +4,15 @@ from genesis_api.tools.handlers import *
 from genesis_api.users.utils import *
 from genesis_api.tools.utils import parse_request, generate_response
 from genesis_api.security import *
-from genesis_api import db
-import redis
+from genesis_api import db, limiter
 
 
 user = Blueprint('user', __name__)
 Session = sessionmaker(bind=db.engine)
-redis_client = redis.StrictRedis(host='redis', port=6379, decode_responses=True)
 
 
 @user.route('/sign_up', methods=['POST'])
+@limiter.limit("5 per minute")  # Apply rate limiting
 @sql_injection_free
 def sign_up_endpoint() -> dict[str:str]:
     session = Session()
@@ -196,7 +195,6 @@ def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:s
 @user.route('/redis', methods=['GET'])
 def redis_endpoint() -> dict[str:str]:
     try:
-        redis_client.set('greeting', 'Hello, Redis!')
         greeting = redis_client.get('greeting')
         print(greeting)
         return generate_response(True, "", None, 200), 200

@@ -8,7 +8,7 @@ import datetime
 tools = Blueprint('tools', __name__)
 
 
-@tools.route('/health_check', methods=['GET', 'POST'])
+@tools.route('/', methods=['GET', 'POST'])
 def health():
     '''
     Check if the server is up

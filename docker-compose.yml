@@ -25,6 +25,7 @@ services:
       - 8080:8080
     networks:
       - app-tier
+
   api:
     container_name: genesis_api
     stdin_open: true
@@ -37,9 +38,19 @@ services:
       - ./App:/genesis_api/App
     networks:
       - app-tier
-  redis:
+
+  redis_rate_limiting:
     image: "redis"
+    container_name: redis_rate_limiting
     ports:
       - "6379:6379"
+    networks:
+      - app-tier
+
+  redis_sessions:
+    image: "redis"
+    container_name: redis_sessions
+    ports:
+      - "6380:6380"
     networks:
       - app-tier
