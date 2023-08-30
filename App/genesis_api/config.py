@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 
 import os
 import secrets
+import redis
 
 
 # Specify the path to your .env file if it's not in the same directory as this file
@@ -36,11 +37,13 @@ class Config:
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 
     # URL for redis
-    RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", 'redis://redis:6379/0')
+    RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL", 'redis://redis_rate_limiting:6379')
 
     # URL for uploading pdfs
     UPLOAD_FOLDER = os.environ.get(
         "UPLOAD_FOLDER", 'App/genesis_api/static/uploads')
+    
+    REDIS_CLIENT = redis.StrictRedis(host='redis_sessions', port=6379, decode_responses=True)
 
     # check if the folder exists
     if not os.path.exists(UPLOAD_FOLDER):

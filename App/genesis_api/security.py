@@ -29,7 +29,8 @@ def token_required(func):
                               algorithms=['HS256'])
             
             # Check if the token has expired if its inside the redis db its expired
-            #     return jsonify({'message': 'Token has expired!'}), 401
+            if Config.REDIS_CLIENT.get(token):
+                return jsonify({'message': 'Token has expired!'}), 401
             
             # Get the user associated with the decoded data (assumed to be a user ID)
             current_user = User.query.filter_by(id=data['public_id']).first()

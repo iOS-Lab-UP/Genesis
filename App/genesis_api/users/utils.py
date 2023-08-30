@@ -72,7 +72,7 @@ def sign_in(session: any, username: str, password: str) -> User:
 def sign_out(session: any, jwt_token: str) -> User:
     '''Sign out function in order to sign out user by adding jwt token to redis'''
     try:
-        pass
+        Config.REDIS_CLIENT.set(jwt_token, 'expired')
     except Exception as e:
         session.rollback()
         logging.error(e)

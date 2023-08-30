@@ -16,7 +16,6 @@ limiter =Limiter(
 )
 
 
-
 # Configure logging
 logging.basicConfig(level=logging.INFO,)
 formatter = logging.Formatter('%(levelname)s - %(message)s')
@@ -36,7 +35,6 @@ def create_app(config_class=Config):
     app.config['SESSION_PERMANENT'] = False
     app.config['SESSION_USE_SIGNER'] = True
     app.config['SESSION_KEY_PREFIX'] = 'your_prefix:'
-    app.config['SESSION_REDIS'] = redis.StrictRedis(host='redis', port=6380, decode_responses=True)
     Session(app)
 
     # Initialize Redis for rate-limiting

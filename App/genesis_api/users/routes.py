@@ -97,8 +97,6 @@ def sign_in_endpoint() -> dict[str:str]:
 def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Sign out user'''
 
-
-
     session = Session()
     try:
         sign_out(session,request.headers['x-access-token'])
