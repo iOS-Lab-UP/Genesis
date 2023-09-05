@@ -45,6 +45,12 @@ class Config:
     
     REDIS_CLIENT = redis.StrictRedis(host='redis_sessions', port=6379, decode_responses=True)
 
+    CACHE_CONFIG = {
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+}
+
     # check if the folder exists
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)

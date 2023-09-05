@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_session import Session
@@ -14,6 +15,14 @@ limiter =Limiter(
     storage_uri="redis://redis_rate_limiting:6379",
     key_func=get_remote_address
 )
+
+# Initialize cache config
+cache = Cache(config={
+    "DEBUG": True,          
+    "CACHE_TYPE": "SimpleCache", 
+    "CACHE_DEFAULT_TIMEOUT": 300
+    })
+
 
 
 # Configure logging
@@ -40,6 +49,11 @@ def create_app(config_class=Config):
     # Initialize Redis for rate-limiting
 
     app.app_context().push()
+
+    # Initialize cache
+
+    cache.init_app(app)
+
 
     from genesis_api.users.routes import user
     from genesis_api.image_classifier.routes import image_classifier
