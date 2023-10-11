@@ -144,3 +144,44 @@ class DoctorPatientAssociation(BaseModel):
     # Relationships
     doctor = db.relationship("User", foreign_keys=[doctor_id])
     patient = db.relationship("User", foreign_keys=[patient_id])
+
+
+class MedicalHistory(BaseModel):
+    """
+    A model class that represents a medical history in the application.
+    """
+    __tablename__ = 'MEDICAL_HISTORY'
+    
+    # Foreign key
+    association_id = db.Column(db.Integer, db.ForeignKey('DOCTOR_PATIENT_ASSOCIATION.id'), nullable=False)
+    
+    # Observation field
+    observation = db.Column(db.Text, nullable=True)
+    
+    # Timestamps
+    date_of_visit = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    next_appointment_date = db.Column(db.Date)
+    
+    # Details
+    diagnosis = db.Column(db.Text)
+    prescription = db.Column(db.Text)
+    symptoms = db.Column(db.Text)
+    
+    # Confidential Notes
+    private_notes = db.Column(db.Text, nullable=True)
+    
+    # Feedback
+    patient_feedback = db.Column(db.Text)
+    
+    # Follow-up
+    follow_up_required = db.Column(db.Boolean, default=False)
+    
+    # Relationships
+    association = db.relationship("DoctorPatientAssociation", backref="medical_histories")
+    user_images = db.relationship("UserImage", secondary="medical_history_user_image_association", backref="medical_histories")
+
+# Association table for MedicalHistory and UserImage
+medical_history_user_image_association = db.Table('MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION',
+    db.Column('medical_history_id', db.Integer, db.ForeignKey('MEDICAL_HISTORY.id'), primary_key=True),
+    db.Column('user_image_id', db.Integer, db.ForeignKey('USER_IMAGE.id'), primary_key=True)
+)
