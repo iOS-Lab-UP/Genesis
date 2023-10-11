@@ -1,34 +1,34 @@
+-- Drop the MEDICAL_HISTORY table if it exists
 DROP TABLE IF EXISTS `MEDICAL_HISTORY`;
 
-CREATE TABLE
-    `MEDICAL_HISTORY` (
-        `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        `association_id` INT NOT NULL,
-        `observation` TEXT,
-        `date_of_visit` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `next_appointment_date` DATETIME,
-        `diagnosis` TEXT,
-        `prescription` TEXT,
-        `symptoms` TEXT,
-        `private_notes` TEXT,
-        `patient_feedback` TEXT,
-        `follow_up_required` BOOLEAN DEFAULT FALSE,
-        `status` BOOLEAN NOT NULL DEFAULT TRUE,
-        `creation_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `last_update` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (`association_id`) REFERENCES `DOCTOR_PATIENT_ASSOCIATION`(`id`)
-    );
+-- Create the MEDICAL_HISTORY table
+CREATE TABLE `MEDICAL_HISTORY` (
+    `ID` INT NOT NULL AUTO_INCREMENT COMMENT 'Unique identifier for each medical history record',
+    `ASSOCIATION_ID` INT NOT NULL COMMENT 'ID of the doctor-patient association',
+    `OBSERVATION` TEXT COMMENT 'Observations made during the visit',
+    `DATE_OF_VISIT` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date and time of the visit',
+    `NEXT_APPOINTMENT_DATE` DATETIME COMMENT 'Date and time of the next appointment',
+    `DIAGNOSIS` TEXT COMMENT 'Diagnosis made during the visit',
+    `PRESCRIPTION` TEXT COMMENT 'Prescription given during the visit',
+    `SYMPTOMS` TEXT COMMENT 'Symptoms reported by the patient',
+    `PRIVATE_NOTES` TEXT COMMENT 'Private notes about the visit',
+    `PATIENT_FEEDBACK` TEXT COMMENT 'Feedback given by the patient',
+    `FOLLOW_UP_REQUIRED` BOOLEAN DEFAULT FALSE COMMENT 'Whether a follow-up visit is required',
+    `STATUS` BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Status of the medical history record',
+    `CREATION_DATE` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date and time when the record was created',
+    `LAST_UPDATE` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Date and time when the record was last updated',
+    PRIMARY KEY (`ID`),
+    FOREIGN KEY (`ASSOCIATION_ID`) REFERENCES `DOCTOR_PATIENT_ASSOCIATION`(`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table containing medical history information';
 
+-- Drop the MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION table if it exists
 DROP TABLE IF EXISTS `MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION`;
 
-CREATE TABLE
-    `MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION` (
-        `medical_history_id` INT NOT NULL,
-        `user_image_id` INT NOT NULL,
-        PRIMARY KEY (
-            `medical_history_id`,
-            `user_image_id`
-        ),
-        FOREIGN KEY (`medical_history_id`) REFERENCES `MEDICAL_HISTORY`(`id`),
-        FOREIGN KEY (`user_image_id`) REFERENCES `USER_IMAGE`(`id`)
-    );
+-- Create the MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION table
+CREATE TABLE `MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION` (
+    `MEDICAL_HISTORY_ID` INT NOT NULL COMMENT 'ID of the medical history record',
+    `USER_IMAGE_ID` INT NOT NULL COMMENT 'ID of the user image',
+    PRIMARY KEY (`MEDICAL_HISTORY_ID`, `USER_IMAGE_ID`),
+    FOREIGN KEY (`MEDICAL_HISTORY_ID`) REFERENCES `MEDICAL_HISTORY`(`ID`),
+    FOREIGN KEY (`USER_IMAGE_ID`) REFERENCES `USER_IMAGE`(`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table containing associations between medical history records and user images';

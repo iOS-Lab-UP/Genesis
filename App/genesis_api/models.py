@@ -1,5 +1,4 @@
 from genesis_api import db
-
 from sqlalchemy import Index
 from flask_bcrypt  import check_password_hash
 from datetime import datetime, timedelta
@@ -44,6 +43,15 @@ class BaseModel(db.Model):
         except:
             return None 
 
+
+"""""""""""""""""""""
+" ASSOCIATION TABLES"
+"""""""""""""""""""""
+
+medical_history_user_image_association = db.Table('MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION',
+    db.Column('medical_history_id', db.Integer, db.ForeignKey('MEDICAL_HISTORY.id'), primary_key=True),
+    db.Column('user_image_id', db.Integer, db.ForeignKey('USER_IMAGE.id'), primary_key=True)
+)
 
 
 class User(BaseModel):
@@ -178,10 +186,9 @@ class MedicalHistory(BaseModel):
     
     # Relationships
     association = db.relationship("DoctorPatientAssociation", backref="medical_histories")
-    user_images = db.relationship("UserImage", secondary="medical_history_user_image_association", backref="medical_histories")
+    user_images = db.relationship("UserImage", secondary=medical_history_user_image_association, backref="medical_histories")
 
 # Association table for MedicalHistory and UserImage
-medical_history_user_image_association = db.Table('MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION',
-    db.Column('medical_history_id', db.Integer, db.ForeignKey('MEDICAL_HISTORY.id'), primary_key=True),
-    db.Column('user_image_id', db.Integer, db.ForeignKey('USER_IMAGE.id'), primary_key=True)
-)
+
+
+

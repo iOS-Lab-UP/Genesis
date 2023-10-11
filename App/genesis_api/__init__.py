@@ -58,9 +58,11 @@ def create_app(config_class=Config):
     from genesis_api.users.routes import user
     from genesis_api.image_classifier.routes import image_classifier
     from genesis_api.tools.routes import tools
+    from genesis_api.medical_history.routes import medical_history
 
     app.register_blueprint(user)
     app.register_blueprint(image_classifier)
     app.register_blueprint(tools)
+    app.register_blueprint(medical_history)
 
     return app
