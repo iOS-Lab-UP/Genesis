@@ -18,15 +18,13 @@ def create_medical_history_report(session: any, user_id: int, **kwargs: dict[str
     if not patient:
         raise InvalidRequestParameters('Patient not found')
     association = session.query(DoctorPatientAssociation).filter_by(doctor_id=doctor.id, patient_id=patient.id).first()
-
-    # Get the last image uploaded by doctor
-    img = session.query(UserImage).filter_by(user_id=doctor.id).order_by(UserImage.id.desc()).first()
+    # instead of d
 
     # Create the medical history report
     medical_history = MedicalHistory(
-        doctor_patient_association_id=association.id,
+        association_id=association.id,
         observation=kwargs['observation'],
-        next_appointment=kwargs['next_appointment'], # AAAA-MM-DD
+        next_appointment_date=kwargs['next_appointment'], # AAAA-MM-DD
         diagnostic=kwargs['diagnostic'],
         prescription=kwargs['prescription'],
         symptoms=kwargs['symptoms'],
@@ -34,7 +32,8 @@ def create_medical_history_report(session: any, user_id: int, **kwargs: dict[str
         patient_feedback=kwargs['patient_feedback'],
         follow_up_required=kwargs['follow_up_required'],
     )
-    medical_history.user_image = img.id
+    medical_history.user_image = kwargs['user_image']
+    
     session.add(medical_history)
     session.commit()
 

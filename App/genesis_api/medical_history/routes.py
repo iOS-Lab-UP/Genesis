@@ -13,15 +13,15 @@ Session = sessionmaker(bind=db.engine)
 
 
 
-@medical_history.route('/medical_history/new_status', methods=['POST'])
+@medical_history.route('/new_status', methods=['POST'])
 @token_required
 @limiter.limit("5 per minute")  # Apply rate limiting
 def get_medical_history(current_user: User) -> dict[str:str]:
     session = Session()
     fields = {"observation":str, "next_appointment":str, "diagnostic":str, "prescription":str, "symptoms":str,
-              "private_notes":str, "patient_feedback":str, "follow_up_required":bool, "patient_id":int}
+              "private_notes":str, "patient_feedback":str, "follow_up_required":bool, "patient_id":int, "user_image":int}
     required_fields = ["next_appointment", "diagnostic", "prescription", "symptoms",
-                       "private_notes", "patient_feedback", "follow_up_required", "patient_id"]
+                       "private_notes", "patient_feedback", "follow_up_required", "patient_id", "user_image"]
     
     try:
         args = parse_request(fields, 'json', required_fields)
