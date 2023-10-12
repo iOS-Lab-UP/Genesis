@@ -168,10 +168,10 @@ class MedicalHistory(BaseModel):
     
     # Timestamps
     date_of_visit = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    next_appointment_date = db.Column(db.Date)
+    next_appointment_date = db.Column(db.Date, nullable=False)
     
     # Details
-    diagnosis = db.Column(db.Text)
+    diagnostic = db.Column(db.Text)
     prescription = db.Column(db.Text)
     symptoms = db.Column(db.Text)
     

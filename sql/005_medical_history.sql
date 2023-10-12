@@ -8,7 +8,7 @@ CREATE TABLE `MEDICAL_HISTORY` (
     `OBSERVATION` TEXT COMMENT 'Observations made during the visit',
     `DATE_OF_VISIT` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date and time of the visit',
     `NEXT_APPOINTMENT_DATE` DATETIME COMMENT 'Date and time of the next appointment',
-    `DIAGNOSIS` TEXT COMMENT 'Diagnosis made during the visit',
+    `DIAGNOSTIC` TEXT COMMENT 'diagnostic made during the visit',
     `PRESCRIPTION` TEXT COMMENT 'Prescription given during the visit',
     `SYMPTOMS` TEXT COMMENT 'Symptoms reported by the patient',
     `PRIVATE_NOTES` TEXT COMMENT 'Private notes about the visit',
