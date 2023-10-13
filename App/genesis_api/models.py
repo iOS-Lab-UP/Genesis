@@ -1,5 +1,6 @@
 from genesis_api import db
 from sqlalchemy import Index
+from sqlalchemy.orm import joinedload, class_mapper
 from flask_bcrypt  import check_password_hash
 from datetime import datetime, timedelta
 
@@ -42,6 +43,33 @@ class BaseModel(db.Model):
             return cls.query.filter_by(id=obj_id, status=True).first()
         except:
             return None 
+        
+    @classmethod
+    def get_data_with_all_children(cls, obj_id: int) -> object:
+        """
+        Retrieves an object by its ID along with all its related objects.
+        """
+        try:
+            # Get all relationship keys for the model
+            relationship_keys = cls._relationship_keys()
+            
+            # Create a query with options to joinedload all relationships
+            query = cls.query
+            for key in relationship_keys:
+                query = query.options(joinedload(key))
+
+            # Execute the query
+            return query.filter_by(id=obj_id, status=True).first()
+        except:
+            return None
+
+    @classmethod
+    def _relationship_keys(cls) -> list:
+        """
+        Get all relationship keys for the class.
+        """
+        mapper = class_mapper(cls)
+        return [relationship.key for relationship in mapper.relationships]
 
 
 """""""""""""""""""""

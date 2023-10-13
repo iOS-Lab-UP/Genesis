@@ -1,6 +1,5 @@
 from flask import Blueprint
 from sqlalchemy.orm import sessionmaker
-
 from genesis_api.medical_history.utils import *
 from genesis_api.tools.handlers import *
 from genesis_api.tools.utils import parse_request, generate_response
@@ -16,7 +15,7 @@ Session = sessionmaker(bind=db.engine)
 @medical_history.route('/new_status', methods=['POST'])
 @token_required
 @limiter.limit("5 per minute")  # Apply rate limiting
-def get_medical_history(current_user: User) -> dict[str:str]:
+def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
     session = Session()
     fields = {"observation":str, "next_appointment":str, "diagnostic":str, "prescription":str, "symptoms":str,
               "private_notes":str, "patient_feedback":str, "follow_up_required":bool, "patient_id":int, "user_image":int}
@@ -35,14 +34,23 @@ def get_medical_history(current_user: User) -> dict[str:str]:
         session.close()
 
 
-@medical_history.route('/', methods=['POST'])
-def create_medical_history():
-    pass
 
-@medical_history.route('/<int:id>', methods=['PUT'])
-def update_medical_history(id):
-    pass
 
-@medical_history.route('/<int:id>', methods=['DELETE'])
-def delete_medical_history(id):
-    pass
+
+@medical_history.route('get_medical_history/<int:patient_id>', methods=['GET'])
+@token_required
+@limiter.limit("5 per minute")  # Apply rate limiting
+def get_medical_history_endpoint(current_user: User, patient_id: int) -> dict[str:str]:
+    session = Session()
+    
+    try:
+        # Assuming there's a function to retrieve medical history in utils
+        medical_history = get_medical_history_by_patient(session, current_user, patient_id)
+        if medical_history:
+            return generate_response(True, 'Medical History retrieved successfully', medical_history, 200), 200
+        else:
+            return generate_response(False, 'Medical History not found', None, 404), 404
+    except Exception as e:
+        return generate_response(False, 'Could not retrieve Medical History', None, 500, str(e)), 500
+    finally:
+        session.close()
