@@ -1,7 +1,7 @@
 from genesis_api import db
 from genesis_api.models import User, Profile, VerificationCode, DoctorPatientAssociation, UserImage, Image, MedicalHistory
 from genesis_api.tools.handlers import *
-from sqlalchemy.orm import Session,joinedload, class_mapper
+from sqlalchemy.orm import Session,joinedload, contains_eager
 
 from genesis_api.tools.utils import *
 import logging
@@ -47,7 +47,6 @@ def create_medical_history_report(session: any, user_id: int, **kwargs: dict[str
 
 
 
-from sqlalchemy.orm import joinedload
 
 def get_medical_history_by_patient(session: Session, current_user: User, patient_id: int) -> dict:
     """
@@ -59,38 +58,33 @@ def get_medical_history_by_patient(session: Session, current_user: User, patient
     :return: A dictionary containing the medical history data, or None if no record was found.
     """
     try:
-        # Find the association record for the current doctor and patient
-        association = session.query(DoctorPatientAssociation).filter(
-            DoctorPatientAssociation.doctor_id == current_user.id,
-            DoctorPatientAssociation.patient_id == patient_id
-        ).first()
+        # Combine queries to retrieve medical history records directly through the association
+        medical_history_records = session.query(MedicalHistory)\
+            .join(DoctorPatientAssociation, DoctorPatientAssociation.id == MedicalHistory.association_id)\
+            .filter(
+                DoctorPatientAssociation.doctor_id == current_user.id,
+                DoctorPatientAssociation.patient_id == patient_id
+            )\
+            .options(
+                contains_eager(MedicalHistory.association).joinedload(DoctorPatientAssociation.patient),
+                joinedload(MedicalHistory.user_images)  # Eager load user images
+            )\
+            .all()
 
-        if association:
-            # Query the database to get the medical history record for the specified association
-            # and load the user_images relationship
-            medical_history_records = session.query(MedicalHistory).filter(
-                MedicalHistory.association_id == association.id
-            ).options(joinedload(MedicalHistory.user_images)).all()
+        if medical_history_records:
+            medical_history_data = []
+            for record in medical_history_records:
+                record_dict = record.to_dict()
+                if record.user_images:  # Only add if there are user images
+                    record_dict['user_images'] = [image.to_dict() for image in record.user_images]
+                medical_history_data.append(record_dict)
 
-            if medical_history_records:
-                # Convert the SQLAlchemy object(s) to a dictionary
-                medical_history_data = []
-                for record in medical_history_records:
-                    record_dict = record.to_dict()
-                    # Add user_images only if there are related records
-                    if record.user_images:
-                        record_dict['user_images'] = [image.to_dict() for image in record.user_images]
-                    medical_history_data.append(record_dict)
-
-                return medical_history_data
-            else:
-                return None
+            return medical_history_data
         else:
             return None
 
     except Exception as e:
-        # Log the error for debugging purposes
-        print(f"An error occurred while retrieving medical history: {e}")
+        logging.exception("An error occurred while retrieving medical history: %s", e)
         return None
 
 

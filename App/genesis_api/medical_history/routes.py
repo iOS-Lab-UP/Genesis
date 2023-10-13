@@ -18,9 +18,9 @@ Session = sessionmaker(bind=db.engine)
 def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
     session = Session()
     fields = {"observation":str, "next_appointment":str, "diagnostic":str, "prescription":str, "symptoms":str,
-              "private_notes":str, "patient_feedback":str, "follow_up_required":bool, "patient_id":int, "user_image":int}
+              "private_notes":str, "follow_up_required":bool, "patient_id":int, "user_image":int}
     required_fields = ["next_appointment", "diagnostic", "prescription", "symptoms",
-                       "private_notes", "patient_feedback", "follow_up_required", "patient_id", "user_image"]
+                        "private_notes", "follow_up_required", "patient_id", "user_image"]
     
     try:
         args = parse_request(fields, 'json', required_fields)

@@ -45,23 +45,32 @@ class BaseModel(db.Model):
             return None 
         
     @classmethod
-    def get_data_with_all_children(cls, obj_id: int) -> object:
+    def get_data_with_all_children(cls, session, **filters):
         """
-        Retrieves an object by its ID along with all its related objects.
+        Retrieve records with all related objects based on specified filters.
+
+        :param session: The SQLAlchemy session to use for database interactions.
+        :param filters: Conditions for filtering records.
+        :return: A list of instances of the calling class.
         """
         try:
             # Get all relationship keys for the model
             relationship_keys = cls._relationship_keys()
-            
+
             # Create a query with options to joinedload all relationships
-            query = cls.query
+            query = session.query(cls).filter_by(**filters)
             for key in relationship_keys:
                 query = query.options(joinedload(key))
 
             # Execute the query
-            return query.filter_by(id=obj_id, status=True).first()
-        except:
+            records = query.all()
+
+            return records
+        except Exception as e:
+            # Log the error for debugging purposes
+            print(f"An error occurred while retrieving data: {e}")
             return None
+
 
     @classmethod
     def _relationship_keys(cls) -> list:
@@ -205,9 +214,6 @@ class MedicalHistory(BaseModel):
     
     # Confidential Notes
     private_notes = db.Column(db.Text, nullable=True)
-    
-    # Feedback
-    patient_feedback = db.Column(db.Text)
     
     # Follow-up
     follow_up_required = db.Column(db.Boolean, default=False)
