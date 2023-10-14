@@ -6,6 +6,8 @@ from genesis_api.tools.utils import generate_response
 from genesis_api.security import *
 from genesis_api import db
 import re
+import json
+
 
 image_classifier = Blueprint('image_classifier', __name__)
 Session = sessionmaker(bind=db.engine)
@@ -29,9 +31,24 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
     if file and allowed_file(file.filename):
 
         # print all the elements of the form
-        print(re.findall(r'"sickness"\s*:\s*"(.*?)"\s*,\s*"precision"\s*:\s*([\d.]+)', str(request.form))
-)
 
+        # assuming the ImmutableMultiDict is stored in a variable called data
+        diagnostic = request.form.get('diagnostic')
+        print(f"Diagnostic: {diagnostic}")
+        if diagnostic:
+            try:
+                # Parse the JSON string to convert it into a Python dictionary
+                diagnostic_dict = json.loads(diagnostic)
+            except json.JSONDecodeError:
+                return jsonify(success=False, message="Invalid JSON in 'diagnostic' field"), 400
+
+            # Now you can access the values in the dictionary
+            for prediction in diagnostic_dict:
+                sickness = prediction.get('sickness')
+                precision = prediction.get('precision')
+                print(f"Sickness: {sickness}, Precision: {precision}")
+        else:
+            print("No diagnostic data found.")
         # Check if the required arguments are present
 
         # Perform further validation on element and precision if needed
