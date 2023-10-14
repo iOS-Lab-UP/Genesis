@@ -34,11 +34,11 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
 
         # assuming the ImmutableMultiDict is stored in a variable called data
         diagnostic = request.form.get('diagnostic')
-        print(f"Diagnostic: {diagnostic}")
         if diagnostic:
             try:
                 # Parse the JSON string to convert it into a Python dictionary
                 diagnostic_dict = json.loads(diagnostic)
+                print(diagnostic_dict)
             except json.JSONDecodeError:
                 return jsonify(success=False, message="Invalid JSON in 'diagnostic' field"), 400
 
