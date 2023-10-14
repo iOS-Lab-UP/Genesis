@@ -173,8 +173,6 @@ class UserImage(BaseModel):
     image_id = db.Column(db.Integer, db.ForeignKey('IMAGE.id'), nullable=False)
     image = db.relationship('Image', backref='user_image', lazy=True)
     user = db.relationship('User', backref='user_image', lazy=True)
-    element = db.Column(db.String(255), nullable=False)
-    precision = db.Column(db.Float, nullable=False)
 
 
 

@@ -9,7 +9,7 @@ from flask import send_from_directory
 import os
 import logging
 
-def save_image(user, image_file, element, precision):
+def save_image(user, image_file):
     # Define the image directory
     image_directory = Config.UPLOAD_FOLDER
 
@@ -26,8 +26,7 @@ def save_image(user, image_file, element, precision):
     db.session.commit()
 
     # Create a new UserImage record
-    user_image = UserImage(user_id=user.id, image_id=new_image.id,
-                           element=element, precision=precision)
+    user_image = UserImage(user_id=user.id, image_id=new_image.id)
 
     # Add the new UserImage to the database
     db.session.add(user_image)
