@@ -43,7 +43,9 @@ class Config:
     UPLOAD_FOLDER = os.environ.get(
         "UPLOAD_FOLDER", 'App/genesis_api/static/uploads')
     
-    REDIS_CLIENT = redis.StrictRedis(host='redis_sessions', port=6379, decode_responses=True)
+    REDIS_CLIENT = redis.StrictRedis(host='redis_sessions', port=6379, decode_responses=True, db=0)
+    REDIS_JWT_CLIENT = redis.StrictRedis(host='redis_sessions', port=6379, db=1, decode_responses=True)
+
 
     CACHE_CONFIG = {
     "DEBUG": True,          # some Flask specific configs

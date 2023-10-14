@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, session
 from uptime import uptime
 from genesis_api.tools.utils import *
+from genesis_api.config import Config
 import psutil
 import datetime
 
@@ -28,3 +29,15 @@ def health():
         "uptime": f"{uptime() / 60 / 60 / 24:.2f} days",
         "message": "Server is up and running",
     })
+
+
+@tools.route('/set/')
+def set_key():
+    Config.REDIS_CLIENT.set('key', 'value')
+    return "Key set in session"
+
+
+@tools.route('/get/')
+def get():
+    value = Config.REDIS_CLIENT.get('key')
+    return f"Key value from session: {value}"
