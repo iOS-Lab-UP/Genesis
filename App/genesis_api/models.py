@@ -121,6 +121,7 @@ class User(BaseModel):
         Checks if the password matches the user's password.
         """
         return check_password_hash(self.password_hash, password)
+    
 
 
 
@@ -139,12 +140,12 @@ class VerificationCode(BaseModel):
     code = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('USER.id'), nullable=False)
 
-    def expire(self, session) -> None:
+    def expire(self) -> None:
         """
         Expire the code and delete the registry from the database (hard delete).
         """
 
-        session.delete(self)
+        db.session.delete(self)
 
 
     def is_expired(self) -> bool:
@@ -183,8 +184,8 @@ class DoctorPatientAssociation(BaseModel):
     A model class that represents the association between doctors and patients.
     """
     __tablename__ = 'DOCTOR_PATIENT_ASSOCIATION'
-    doctor_id = db.Column(db.Integer, db.ForeignKey('USER.id'), primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('USER.id'), primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('USER.id'))
+    patient_id = db.Column(db.Integer, db.ForeignKey('USER.id'))
 
     # Relationships
     doctor = db.relationship("User", foreign_keys=[doctor_id])
@@ -209,7 +210,6 @@ class MedicalHistory(BaseModel):
     
     # Details
     diagnostic = db.Column(db.Text)
-    prescription = db.Column(db.Text)
     symptoms = db.Column(db.Text)
     
     # Confidential Notes

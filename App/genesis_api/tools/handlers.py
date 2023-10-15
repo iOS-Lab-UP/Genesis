@@ -8,6 +8,9 @@ class UserAlreadyExistsError(Exception):
 class InvalidRequestParameters(Exception):
     pass
 
+class DuplicateEntryError(Exception):
+    """Raised when a duplicate database entry is attempted."""
+    pass
 
 class IncorrectCredentialsError(Exception):
     '''Custom exception class for incorrect user credentials'''
@@ -30,4 +33,12 @@ class RelationshipAlreadyExistsError(Exception):
 
 class UserNotFoundError(Exception):
     '''Custom Exception to handle user not found in DB'''
+    pass
+
+class InternalServerError(Exception):
+    '''Custom Exception to handle internal server errors'''
+    pass
+
+class ElementNotFoundError(Exception):
+    '''Custom Exception to handle element not found in DB'''
     pass

@@ -10,6 +10,7 @@ from flask_bcrypt import generate_password_hash
 from datetime import datetime
 from smtplib import SMTPException
 from email.message import EmailMessage
+from sqlalchemy.exc import SQLAlchemyError
 
 import random
 import logging
@@ -18,10 +19,10 @@ import ssl
 import smtplib
 
 
-def create_user(session: any, name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
+def create_user(name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
     '''Create a user and return a User object type'''
 
-    if not is_username_valid(session, username) or not is_valid_email(session, email) or not session.query(Profile).filter(Profile.id == profile_id).first():
+    if not is_username_valid( username) or not is_valid_email( email) or not db.session.query(Profile).filter(Profile.id == profile_id).first():
         raise InvalidRequestParameters(
             'User already exists in the database. Please try again with a different email or username.')
 
@@ -33,24 +34,28 @@ def create_user(session: any, name: str, username: str, email: str, password: st
     try:
         user = User(name=name, username=username, email=email, password_hash=generate_password_hash(
             password).decode('utf-8'), birth_date=birth_date, profile_id=profile_id, cedula=cedula, status=0)
-        session.add(user)
-        session.commit()
+        db.session.add(user)
+        db.session.commit()
 
         user_data = user.to_dict()
         user_data['jwt_token'] = encodeJwtToken(user_data)
         return user_data
 
     except Exception as e:
-        session.rollback()
+        db.session.rollback()
         logging.error(e)
         raise
 
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logging.error(InternalServerError(e))
 
-def sign_in(session: any, username: str, password: str) -> User:
+
+def sign_in(username: str, password: str) -> User:
     '''Sign in function in order to authenticate user'''
 
     try:
-        user = session.query(User).\
+        user = db.session.query(User).\
             filter(User.username == username).\
             filter(User.status == 1).\
             first()
@@ -64,17 +69,17 @@ def sign_in(session: any, username: str, password: str) -> User:
                 'The provided username or password is incorrect. Please try again.'
             )
     except Exception as e:
-        session.rollback()
+        db.session.rollback()
         logging.error(e)
         raise
 
 
-def sign_out(session: any, jwt_token: str) -> User:
+def sign_out( jwt_token: str) -> User:
     '''Sign out function in order to sign out user by adding jwt token to redis'''
     try:
         Config.REDIS_CLIENT.set(jwt_token, 'expired')
     except Exception as e:
-        session.rollback()
+        db.session.rollback()
         logging.error(e)
 
 
@@ -89,7 +94,7 @@ def get_user(id: int) -> dict[str:str]:
         return None
 
 
-def validate_user_data(session: any, user_data: User, profile_id: int, cedula: str) -> dict:
+def validate_user_data(user_data: User, profile_id: int, cedula: str) -> dict:
 
     validated_data = {}
 
@@ -97,12 +102,10 @@ def validate_user_data(session: any, user_data: User, profile_id: int, cedula: s
         validated_data['name'] = user_data['name']
 
     if 'username' in user_data:
-        validated_data['username'] = user_data['username'] if is_username_valid(
-            session, user_data['username']) else None
+        validated_data['username'] = user_data['username'] if is_username_valid( user_data['username']) else None
 
     if 'email' in user_data:
-        validated_data['email'] = user_data['email'] if is_valid_email(
-            session, user_data['email']) else None
+        validated_data['email'] = user_data['email'] if is_valid_email( user_data['email']) else None
 
     if 'password' in user_data:
         validated_data['password_hash'] = generate_password_hash(
@@ -119,18 +122,18 @@ def validate_user_data(session: any, user_data: User, profile_id: int, cedula: s
     return validated_data
 
 
-def update_user(session: any, current_user_id: int, **user_data: User) -> User:
+def update_user(current_user_id: int, **user_data: User) -> User:
     '''Update user function in order to update user's info from DB'''
 
-    user = session.query(User).filter(User.id == current_user_id).first()
+    user = db.session.query(User).filter(User.id == current_user_id).first()
     if user and user.check_password(user_data.get('password', '')):
         validated_data = validate_user_data(
-            session, user_data, user.profile_id, user.cedula)
+            user_data, user.profile_id, user.cedula)
         for field, value in validated_data.items():
             if value is not None:
                 setattr(user, field, value)
 
-        session.commit()
+        db.session.commit()
         return user
 
     else:
@@ -191,17 +194,17 @@ def validate_doctor_identity(cedula: str, name: str) -> bool:
     return is_valid(response.json(), first_name, last_name1, last_name2, id_cedula)
 
 
-def generate_verification_code(session: any, current_user_id: User) -> str:
+def generate_verification_code( current_user_id: User) -> str:
     '''Generate verification code in order to generate verification code'''
     try:
-        if not session.query(VerificationCode).filter(VerificationCode.user_id == current_user_id).first():
+        if not db.session.query(VerificationCode).filter(VerificationCode.user_id == current_user_id).first():
             verificaton_code = VerificationCode(user_id=current_user_id, code=''.join(
                 ''.join(random.choice('0123456789') for _ in range(5))))
             db.session.add(verificaton_code)
             db.session.commit()
         else:
             verificaton_code = update_verification_code(
-                session, current_user_id)
+                current_user_id)
 
         return verificaton_code
     except Exception as e:
@@ -210,16 +213,16 @@ def generate_verification_code(session: any, current_user_id: User) -> str:
         raise
 
 
-def update_verification_code(session: any, user_id: User) -> str:
+def update_verification_code( user_id: User) -> str:
     '''Update verification code associated to user_id in db'''
     try:
-        verificaton_code = session.query(VerificationCode).filter(
+        verificaton_code = db.session.query(VerificationCode).filter(
             VerificationCode.user_id == user_id).first()
         if verificaton_code:
             verificaton_code.code = ''.join(
                 random.choice('0123456789') for _ in range(5))
             
-            session.commit()
+            db.session.commit()
             return verificaton_code
 
         else:
@@ -228,7 +231,7 @@ def update_verification_code(session: any, user_id: User) -> str:
             )
 
     except Exception as e:
-        session.rollback()
+        db.session.rollback()
         logging.error(e)
         raise
 
@@ -273,12 +276,12 @@ def send_email(mail, html):
         logging.error('Error sending email: %s', e)
 
 
-def verify_code(session: any, user_id: int, code: str) -> User:
+def verify_code( user_id: int, code: str) -> User:
     '''Compare the user input code to the one in DB associated to him,
         if they are equal, set user status to 1 else raise an error
     '''
     try:
-        verification_code = session.query(VerificationCode).\
+        verification_code = db.session.query(VerificationCode).\
             filter(VerificationCode.user_id == user_id).\
             filter(VerificationCode.code == code).first()
         if not verification_code or verification_code.is_expired():
@@ -286,12 +289,12 @@ def verify_code(session: any, user_id: int, code: str) -> User:
                 'Invalid verification code, resend it or input it again'
             )
         else:
-            user = session.query(User).filter(User.id == user_id).first()
+            user = db.session.query(User).filter(User.id == user_id).first()
             user.status = True
-            session.add(user)  # Explicitly add changed user instance
-            verification_code.expire(session)
-            session.flush()  # Add this line to synchronize session's state with DB
-            session.commit()  # Ensure this is being called
+            db.session.add(user)  # Explicitly add changed user instance
+            verification_code.expire()
+            db.session.flush()  # Add this line to synchronize session's state with DB
+            db.session.commit()  # Ensure this is being called
             return user
     except Exception as e:
         logging.error(e)
@@ -326,13 +329,13 @@ def send_doctor_patient_association_email(session: any, doctor_id: int, patient_
 
 
 
-def create_doctor_patient_association(session: any, doctor_id: int, patient_username: int) -> str:
+def create_doctor_patient_association( doctor_id: int, patient_username: int) -> str:
     """ Register an association between a doctor and a patient """
     
-    patient_id = session.query(User).filter_by(username=patient_username).first().id
+    patient_id = db.session.query(User).filter_by(username=patient_username).first().id
 
     # Check if an association already exists
-    existing_association = session.query(DoctorPatientAssociation).\
+    existing_association = db.session.query(DoctorPatientAssociation).\
         filter_by(doctor_id=doctor_id, patient_id=patient_id).first()
     
     if existing_association:
@@ -340,19 +343,19 @@ def create_doctor_patient_association(session: any, doctor_id: int, patient_user
     
     # Create a new association
     association = DoctorPatientAssociation(doctor_id=doctor_id, patient_id=patient_id)
-    session.add(association)
-    session.commit()
+    db.session.add(association)
+    db.session.commit()
 
 
-def get_patients(session: any) -> list[User]:
+def get_patients() -> list[User]:
     """ Get all the patients associated with a doctor """
     try:
 
-        patients = [patient.to_dict() for patient in session.query(User).filter_by(profile_id=1).all()]
+        patients = [patient.to_dict() for patient in db.session.query(User).filter_by(profile_id=1).all()]
         return patients
     except Exception as e:
         logging.error(e)
-        session.rollback()
+        db.session.rollback()
         raise
 
 

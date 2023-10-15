@@ -1,5 +1,7 @@
 from genesis_api import db
 from genesis_api.config import Config
+from genesis_api.tools.utils import *
+from genesis_api.tools.handlers import *
 from werkzeug.utils import secure_filename
 from genesis_api.models import *
 
@@ -8,29 +10,35 @@ from flask import send_from_directory
 
 import os
 import logging
+from sqlalchemy.exc import SQLAlchemyError
+
 
 def save_image(user, image_file):
     # Define the image directory
-    image_directory = Config.UPLOAD_FOLDER
+    try:
+        image_directory = Config.UPLOAD_FOLDER
 
-    # Save the image to the directory
-    filename = secure_filename(image_file.filename)
-    image_path = os.path.join(image_directory, filename)
-    image_file.save(image_path)
+        # Save the image to the directory
+        filename = secure_filename(image_file.filename)
+        image_path = os.path.join(image_directory, filename)
+        image_file.save(image_path)
 
-    # Create a new Image record
-    new_image = Image(path=image_path, name=filename)
+        # Create a new Image record
+        new_image = Image(path=image_path, name=filename)
 
-    # Add the new image to the database
-    db.session.add(new_image)
-    db.session.commit()
+        # Add the new image to the database
+        db.session.add(new_image)
+        db.session.commit()
 
-    # Create a new UserImage record
-    user_image = UserImage(user_id=user.id, image_id=new_image.id)
+        # Create a new UserImage record
+        user_image = UserImage(user_id=user.id, image_id=new_image.id)
 
-    # Add the new UserImage to the database
-    db.session.add(user_image)
-    db.session.commit()
+        # Add the new UserImage to the database
+        db.session.add(user_image)
+        db.session.commit()
+    except SQLAlchemyError as e:
+        logging.exception("An error occurred while saving an image: %s", e)
+        raise InternalServerError(e)
 
     return user_image
 

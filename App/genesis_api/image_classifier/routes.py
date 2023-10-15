@@ -63,6 +63,7 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
         return generate_response(True, 'Image successfully uploaded', user_image.to_dict(), 201), 201
     else:
         return generate_response(False, 'File type not allowed', None, 400), 400
+    
 
 
 

@@ -161,7 +161,7 @@ def split_names(nombre: str) -> list[str]:
     return name_lastname
 
 
-def is_valid_email(session: any, email_address: str) -> bool:
+def is_valid_email( email_address: str) -> bool:
     '''Check if the email address is valid and not already in the database'''
     try:
         # Check that the email address is valid
@@ -172,7 +172,8 @@ def is_valid_email(session: any, email_address: str) -> bool:
         email_address = emailinfo.normalized
 
         # Check if the email exists in the database
-        email_exists = session.query(User).filter(
+        email_exists = db.\
+            session.query(User).filter(
             User.email == email_address).first() is not None
 
         return not email_exists
@@ -181,14 +182,16 @@ def is_valid_email(session: any, email_address: str) -> bool:
         return False
 
 
-def is_username_valid(session, username):
+def is_username_valid(username):
     """Check if username is valid."""
     # Check if username is lowercase
     if not username.islower():
         return False
 
     # Check if username exists in the database
-    if session.query(User).filter(User.username == username).first():
+    if db.session.query(User).filter(User.username == username).first():
         return False
 
     return True
+
+

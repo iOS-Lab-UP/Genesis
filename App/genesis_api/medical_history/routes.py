@@ -12,19 +12,20 @@ Session = sessionmaker(bind=db.engine)
 
 
 
-@medical_history.route('/new_status', methods=['POST'])
+@medical_history.route('/new_report', methods=['POST'])
 @token_required
-@limiter.limit("5 per minute")  # Apply rate limiting
+@limiter.limit("30 per minute")  # Apply rate limiting
 def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
     session = Session()
-    fields = {"observation":str, "next_appointment":str, "diagnostic":str, "prescription":str, "symptoms":str,
-              "private_notes":str, "follow_up_required":bool, "patient_id":int, "user_image":int}
-    required_fields = ["next_appointment", "diagnostic", "prescription", "symptoms",
+    fields = {"observation":str, "next_appointment":str, "diagnostic":str,  "symptoms":str,
+              "private_notes":str, "follow_up_required":bool, "patient_id":int, "user_image":int, }
+    required_fields = ["next_appointment", "diagnostic",  "symptoms",
                         "private_notes", "follow_up_required", "patient_id", "user_image"]
     
     try:
+        print(request.json.keys())
         args = parse_request(fields, 'json', required_fields)
-        medical_history = create_medical_history_report(session, current_user.id,**args)
+        medical_history = create_medical_history_report(current_user.id,**args)
         return generate_response(True, 'Medical History was successfully created', medical_history, 201), 201
     except InvalidRequestParameters as e:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400

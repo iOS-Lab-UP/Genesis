@@ -1,46 +1,51 @@
-from genesis_api import db
-from genesis_api.models import User, Profile, VerificationCode, DoctorPatientAssociation, UserImage, Image, MedicalHistory
+from genesis_api.models import User,  DoctorPatientAssociation, UserImage,  MedicalHistory, Prescription
 from genesis_api.tools.handlers import *
-from sqlalchemy.orm import Session,joinedload, contains_eager
-
 from genesis_api.tools.utils import *
+
+from sqlalchemy.orm import Session,joinedload, contains_eager
+from sqlalchemy.exc import SQLAlchemyError
+
 import logging
 
 
-def create_medical_history_report(session: any, user_id: int, **kwargs: dict[str,type]) -> dict[str,str]:
+def create_medical_history_report(user_id: int, **kwargs: dict[str,type]) -> dict[str,str]:
     """
     Create a new medical history report for a patient.
     """
-    # Get the doctor
-    doctor = session.query(User).filter_by(id=user_id).first()
-    if not doctor:
-        raise InvalidRequestParameters('Doctor not found')
-    
-    # Get the patient and the doctor-patient association id
-    patient = session.query(User).filter_by(id=kwargs['patient_id']).first()
-    if not patient:
-        raise InvalidRequestParameters('Patient not found')
-    association = session.query(DoctorPatientAssociation).filter_by(doctor_id=doctor.id, patient_id=patient.id).first()
-    # instead of d
 
-    # Create the medical history report
-    medical_history = MedicalHistory(
-        association_id=association.id,
-        observation=kwargs['observation'],
-        next_appointment_date=kwargs['next_appointment'], # AAAA-MM-DD
-        diagnostic=kwargs['diagnostic'],
-        prescription=kwargs['prescription'],
-        symptoms=kwargs['symptoms'],
-        private_notes=kwargs['private_notes'],
-        patient_feedback=kwargs['patient_feedback'],
-        follow_up_required=kwargs['follow_up_required'],
-    )
-    medical_history.user_images.append(session.query(UserImage).get(kwargs['user_image']))
-    
-    session.add(medical_history)
-    session.commit()
-
-    # Return the medical history report
+    try:
+        # Get the patient and the doctor-patient association id
+        patient_id = User.get_data(kwargs['patient_id']).id
+        if not patient_id:
+            raise ElementNotFoundError('Patient not found')
+        
+        association = db.session.query(DoctorPatientAssociation).filter_by(doctor_id=user_id, patient_id=patient_id).first()
+        if not association:
+            raise ElementNotFoundError('Doctor-Patient association not found')
+        elif db.session.query(MedicalHistory).filter_by(association_id=association.id).first():
+            raise DuplicateEntryError('Medical history report already exists for this patient')
+        
+        # Create the medical history report
+        medical_history = MedicalHistory(
+            association_id=association.id,
+            observation=kwargs['observation'],
+            next_appointment_date=kwargs['next_appointment'], # AAAA-MM-DD
+            diagnostic=kwargs['diagnostic'],
+            symptoms=kwargs['symptoms'],
+            private_notes=kwargs['private_notes'],
+            follow_up_required=kwargs['follow_up_required'],
+        )
+        medical_history.user_images.append(UserImage.get_data(kwargs['user_image']))
+        db.session.add(medical_history)
+        db.session.commit()
+    except Exception as e:
+        logging.exception("An error occurred while creating a medical history report: %s", e)
+        raise InternalServerError(e)
+    except SQLAlchemyError as e:
+        logging.exception("An error occurred while creating a medical history report: %s", e)
+        raise InternalServerError(e)
+        
+    # Return the medical history report as a dictionary
     return medical_history.to_dict()
 
 
@@ -49,7 +54,22 @@ def create_prescription(session: Session, **kwargs:dict[str,type]) -> dict[str,s
     """
     Create a new prescription obj
     """
-    pass
+
+    prescription = Prescription(
+        treatment=kwargs['treatment'],
+        dosage=kwargs['dosage'],
+        frequency=kwargs['frequency'],
+        frequency_unit=kwargs['frequency_unit'],
+        duration=kwargs['duration'],
+        duration_unit=kwargs['duration_unit'],
+        medical_history_id=kwargs['medical_history_id']
+    )
+    session.add(prescription)
+    session.commit()
+
+    return prescription.to_dict()
+
+
 
 
 
