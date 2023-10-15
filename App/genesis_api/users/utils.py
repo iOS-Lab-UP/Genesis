@@ -298,6 +298,33 @@ def verify_code(session: any, user_id: int, code: str) -> User:
         session.rollback()  # Rollback the session in case of error
         raise
 
+def send_doctor_patient_association_email(session: any, doctor_id: int, patient_username: str) -> None:
+    """
+    Params:
+        session: SQLAlchemy session
+        doctor_id: int
+        patient: it can be either a username
+    """
+
+    # Get the doctor's email
+    doctor_email = session.query(User).filter_by(id=doctor_id).first().email
+
+    # Get the patient's email
+    patient_email = session.query(User).filter_by(username=patient_username).first().email
+
+    # Send the email to the patient
+    mail = EmailMessage()
+    mail['From'] = Config.MAIL_EMAIL
+    mail['To'] = patient_email
+    mail['Subject'] = 'Doctor Patient Association'
+    mail.add_header('Content-Type', 'text/html',)
+
+
+    
+   
+
+
+
 
 def create_doctor_patient_association(session: any, doctor_id: int, patient_username: int) -> str:
     """ Register an association between a doctor and a patient """

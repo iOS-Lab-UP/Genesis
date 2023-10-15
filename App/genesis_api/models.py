@@ -3,6 +3,8 @@ from sqlalchemy import Index
 from sqlalchemy.orm import joinedload, class_mapper
 from flask_bcrypt  import check_password_hash
 from datetime import datetime, timedelta
+from enum import Enum
+
 
 class BaseModel(db.Model):
     """
@@ -220,7 +222,25 @@ class MedicalHistory(BaseModel):
     association = db.relationship("DoctorPatientAssociation", backref="medical_histories")
     user_images = db.relationship("UserImage", secondary=medical_history_user_image_association, backref="medical_histories")
 
-# Association table for MedicalHistory and UserImage
+class FrequencyUnit(Enum):
+    minute = 'minute'
+    hour = 'hour'
+    day = 'day'
+    week = 'week'
+    month = 'month'
 
 
+class Prescription(BaseModel):
+    """
+    A model class that represents a prescription in the application.
+    """
+    __tablename__ = 'PRESCRIPTION'
 
+    treatment = db.Column(db.String(255), nullable=False, comment='Name of the medicine prescribed')
+    indications = db.Column(db.Text, comment='Detailed indications for the patient')
+    dosage = db.Column(db.String(100), nullable=False, comment='Dosage of the medicine')
+    frequency_value = db.Column(db.Integer, nullable=False, comment='The numerical value of the frequency (e.g., every 2 hours, every 3 days, etc.)')
+    frequency_unit = db.Column(db.Enum(FrequencyUnit), nullable=False, comment='The unit of time for the frequency (minutes, hours, days, weeks, or months)')
+    start_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, comment='Start date of the medication')
+    end_date = db.Column(db.DateTime, comment='End date of the medication, can be NULL if indefinite or as needed')
+    notifications_enabled = db.Column(db.Boolean, default=True, comment='Whether notifications for this prescription are enabled')

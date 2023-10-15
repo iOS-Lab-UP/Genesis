@@ -45,6 +45,12 @@ def create_medical_history_report(session: any, user_id: int, **kwargs: dict[str
 
 
 
+def create_prescription(session: Session, **kwargs:dict[str,type]) -> dict[str,str]:
+    """
+    Create a new prescription obj
+    """
+    pass
+
 
 
 
