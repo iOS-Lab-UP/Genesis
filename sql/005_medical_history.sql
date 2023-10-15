@@ -17,32 +17,37 @@ CREATE TABLE `PRESCRIPTION` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table containing prescription information';
 
 
-
-
-DROP TABLE IF EXISTS `MEDICAL_HISTORY`;
-
--- Create the MEDICAL_HISTORY table
 DROP TABLE IF EXISTS `MEDICAL_HISTORY`;
 CREATE TABLE `MEDICAL_HISTORY` (
   `ID` int NOT NULL AUTO_INCREMENT COMMENT 'Unique identifier for each medical history record',
   `ASSOCIATION_ID` int NOT NULL COMMENT 'ID of the doctor-patient association',
-  `OBSERVATION` text COLLATE utf8mb4_unicode_ci COMMENT 'Observations made during the visit',
+  `OBSERVATION` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Observations made during the visit',
   `DATE_OF_VISIT` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date and time of the visit',
   `NEXT_APPOINTMENT_DATE` datetime DEFAULT NULL COMMENT 'Date and time of the next appointment',
-  `DIAGNOSTIC` text COLLATE utf8mb4_unicode_ci COMMENT 'diagnostic made during the visit',
-  `PRESCRIPTION_ID` int DEFAULT NULL COMMENT 'Prescription given during the visit',
-  `SYMPTOMS` text COLLATE utf8mb4_unicode_ci COMMENT 'Symptoms reported by the patient',
-  `PRIVATE_NOTES` text COLLATE utf8mb4_unicode_ci COMMENT 'Private notes about the visit',
+  `DIAGNOSTIC` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'diagnostic made during the visit',
+  `SYMPTOMS` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Symptoms reported by the patient',
+  `PRIVATE_NOTES` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Private notes about the visit',
   `FOLLOW_UP_REQUIRED` tinyint(1) DEFAULT '0' COMMENT 'Whether a follow-up visit is required',
   `STATUS` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Status of the medical history record',
   `CREATION_DATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date and time when the record was created',
   `LAST_UPDATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Date and time when the record was last updated',
   PRIMARY KEY (`ID`),
   KEY `ASSOCIATION_ID` (`ASSOCIATION_ID`),
-  KEY `PRESCRIPTION_ID` (`PRESCRIPTION_ID`),
-  CONSTRAINT `MEDICAL_HISTORY_ibfk_1` FOREIGN KEY (`ASSOCIATION_ID`) REFERENCES `DOCTOR_PATIENT_ASSOCIATION` (`ID`),
-  CONSTRAINT `MEDICAL_HISTORY_ibfk_2` FOREIGN KEY (`PRESCRIPTION_ID`) REFERENCES `PRESCRIPTION` (`ID`)
+  CONSTRAINT `MEDICAL_HISTORY_ibfk_1` FOREIGN KEY (`ASSOCIATION_ID`) REFERENCES `DOCTOR_PATIENT_ASSOCIATION` (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Table containing medical history information';
+
+
+DROP TABLE IF EXISTS `MEDICAL_HISTORY_PRESCRIPTION_ASSOCIATION`;
+CREATE TABLE `MEDICAL_HISTORY_PRESCRIPTION_ASSOCIATION` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `MEDICAL_HISTORY_ID` int NOT NULL,
+  `PRESCRIPTION_ID` int NOT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `MEDICAL_HISTORY_ID` (`MEDICAL_HISTORY_ID`),
+  KEY `PRESCRIPTION_ID` (`PRESCRIPTION_ID`),
+  CONSTRAINT `MEDICAL_HISTORY_PRESCRIPTION_ASSOCIATION_ibfk_1` FOREIGN KEY (`MEDICAL_HISTORY_ID`) REFERENCES `MEDICAL_HISTORY` (`ID`),
+  CONSTRAINT `MEDICAL_HISTORY_PRESCRIPTION_ASSOCIATION_ibfk_2` FOREIGN KEY (`PRESCRIPTION_ID`) REFERENCES `PRESCRIPTION` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Drop the MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION table if it exists
 
