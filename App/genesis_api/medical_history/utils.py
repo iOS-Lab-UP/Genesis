@@ -22,7 +22,7 @@ def create_medical_history_report(user_id: int, **kwargs: dict[str,type]) -> dic
         association = db.session.query(DoctorPatientAssociation).filter_by(doctor_id=user_id, patient_id=patient_id).first()
         if not association:
             raise ElementNotFoundError('Doctor-Patient association not found')
-        elif db.session.query(MedicalHistory).filter_by(association_id=association.id).first():
+        elif db.session.query(MedicalHistory).filter(MedicalHistory.association_id == association.id, MedicalHistory.next_appointment_date==kwargs['next_appointment']).first():
             raise DuplicateEntryError('Medical history report already exists for this patient')
         
         # Create the medical history report

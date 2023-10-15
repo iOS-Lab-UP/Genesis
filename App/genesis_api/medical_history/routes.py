@@ -16,7 +16,6 @@ Session = sessionmaker(bind=db.engine)
 @token_required
 @limiter.limit("30 per minute")  # Apply rate limiting
 def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
-    session = Session()
     fields = {"observation":str, "next_appointment":str, "diagnostic":str,  "symptoms":str,
               "private_notes":str, "follow_up_required":bool, "patient_id":int, "user_image":int, }
     required_fields = ["next_appointment", "diagnostic",  "symptoms",
@@ -31,8 +30,6 @@ def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
     except Exception as e:
         return generate_response(False, 'Could not create Medical History', None, 500, str(e)), 500
-    finally:
-        session.close()
 
 
 
