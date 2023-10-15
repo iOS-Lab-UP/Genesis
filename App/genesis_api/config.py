@@ -25,7 +25,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
     # JWT Secret Key
-    SECRET_KEY = secrets.token_hex(16)
+    SECRET_KEY = os.getenv("SECRET_KEY")
 
     # Mail Credentials
     MAIL_SERVER = os.environ.get("MAIL_SERVER")

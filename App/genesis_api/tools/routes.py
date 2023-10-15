@@ -36,8 +36,3 @@ def set_key():
     Config.REDIS_CLIENT.set('key', 'value')
     return "Key set in session"
 
-
-@tools.route('/get/')
-def get():
-    value = Config.REDIS_CLIENT.get('key')
-    return f"Key value from session: {value}"
