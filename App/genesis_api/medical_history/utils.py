@@ -183,7 +183,7 @@ def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: in
         # in the existent medical history report, add the feedback
         medical_history.feedback = feedback
         db.session.commit()
-        
+
     except Exception as e:
         logging.exception("An error occurred while sending feedback to a patient: %s", e)
         raise InternalServerError(e)
@@ -192,7 +192,7 @@ def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: in
         raise InternalServerError(e)
         
     # Return the feedback as a dictionary
-    return feedback.to_dict()
+    return medical_history.get_data(medical_history_id).to_dict()
     
 
 
