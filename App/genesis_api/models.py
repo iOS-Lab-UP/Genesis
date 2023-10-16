@@ -231,6 +231,9 @@ class MedicalHistory(BaseModel):
     
     # Follow-up
     follow_up_required = db.Column(db.Boolean, default=False)
+
+    # Patient Feedback
+    patient_feedback = db.Column(db.Text, nullable=True, default=None)
     
     # Relationships
     association = db.relationship("DoctorPatientAssociation", backref="medical_histories")

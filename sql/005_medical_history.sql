@@ -29,6 +29,7 @@ CREATE TABLE `MEDICAL_HISTORY` (
   `SYMPTOMS` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Symptoms reported by the patient',
   `PRIVATE_NOTES` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Private notes about the visit',
   `FOLLOW_UP_REQUIRED` tinyint(1) DEFAULT '0' COMMENT 'Whether a follow-up visit is required',
+  `PATIENT_FEEDBACK` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '',
   `STATUS` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Status of the medical history record',
   `CREATION_DATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date and time when the record was created',
   `LAST_UPDATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Date and time when the record was last updated',

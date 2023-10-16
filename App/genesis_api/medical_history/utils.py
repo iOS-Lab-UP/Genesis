@@ -76,8 +76,6 @@ def create_medical_history_report(user_id: int, **kwargs: dict[str,type]) -> dic
 
 
 
-from datetime import datetime
-from sqlalchemy.exc import SQLAlchemyError
 
 def create_prescription(**kwargs: dict[str, type]) -> dict[str, str]:
     """
@@ -159,5 +157,42 @@ def get_medical_history_by_patient(current_user: User, patient_id: int) -> dict:
     except Exception as e:
         logging.exception("An error occurred while retrieving medical history: %s", e)
         return None
+    
+
+def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: int) -> dict[str:str]:
+    """
+    Send feedback to a patient about a medical history report.
+
+    Args:
+        patient_id (int): The ID of the patient to whom the feedback is being sent.
+        feedback (str): The feedback to send to the patient.
+        medical_history_id (int): The ID of the medical history report to which the feedback is being sent.
+
+    Returns:
+        dict: A dictionary containing the feedback.
+    """
+
+    try:
+        # Get the patient medical history report and check if its associated with the patient
+        medical_history = MedicalHistory.get_data(medical_history_id)
+        if not medical_history:
+            raise ElementNotFoundError('Medical history report not found')
+        elif medical_history.association.patient_id != patient_id:
+            raise ElementNotFoundError('Medical history report not found')
+        
+        # in the existent medical history report, add the feedback
+        medical_history.feedback = feedback
+        db.session.commit()
+        
+    except Exception as e:
+        logging.exception("An error occurred while sending feedback to a patient: %s", e)
+        raise InternalServerError(e)
+    except SQLAlchemyError as e:
+        logging.exception("An error occurred while sending feedback to a patient: %s", e)
+        raise InternalServerError(e)
+        
+    # Return the feedback as a dictionary
+    return feedback.to_dict()
+    
 
 

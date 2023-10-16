@@ -51,3 +51,21 @@ def get_medical_history_endpoint(current_user: User, patient_id: int) -> dict[st
             return generate_response(False, 'Medical History not found', None, 404), 404
     except Exception as e:
         return generate_response(False, 'Could not retrieve Medical History', None, 500, str(e)), 500
+
+
+
+@medical_history.route('/send_patient_feedback', methods=['PATCH'])
+@token_required
+@limiter.limit("5 per minute")  # Apply rate limiting
+def send_patient_feedback_endpoint(current_user: User) -> dict[str:str]:
+    fields = {"feedback":str, "medical_history_id":int}
+    required_fields = ["feedback","medical_history_id"]
+    
+    try:
+        args = parse_request(fields, 'json', required_fields)
+        send_patient_feedback(current_user.id,**args)
+        return generate_response(True, 'Patient feedback was successfully sent', None, 200), 200
+    except InvalidRequestParameters as e:
+        return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
+    except Exception as e:
+        return generate_response(False, 'Could not send patient feedback', None, 500, str(e)), 500

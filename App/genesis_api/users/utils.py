@@ -397,12 +397,6 @@ def send_doctor_patient_association_email(session: any, doctor_id: int, patient_
     mail.add_header('Content-Type', 'text/html',)
 
 
-    
-   
-
-
-
-
 def create_doctor_patient_association( doctor_id: int, patient_username: int) -> str:
     """ Register an association between a doctor and a patient """
     
@@ -443,7 +437,6 @@ def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
         filter(DoctorPatientAssociation.doctor_id == doctor_id).\
         all()
     
-    print(patients)
 
     # Get all the images associated with each patient
     images = []
