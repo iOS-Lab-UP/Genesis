@@ -159,7 +159,7 @@ def get_medical_history_by_patient(current_user: User, patient_id: int) -> dict:
         return None
     
 
-def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: int) -> dict[str:str]:
+def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: int) -> None:
     """
     Send feedback to a patient about a medical history report.
 
@@ -191,8 +191,6 @@ def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: in
         logging.exception("An error occurred while sending feedback to a patient: %s", e)
         raise InternalServerError(e)
         
-    # Return the feedback as a dictionary
-    return medical_history.get_data(medical_history_id).to_dict()
     
 
 

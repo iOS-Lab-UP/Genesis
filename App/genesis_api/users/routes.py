@@ -166,3 +166,21 @@ def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:s
 
 
 
+
+@user.route('/new_password', methods=['PATCH'])
+@token_required
+@limiter.limit("5 per minute")  # Apply rate limiting
+@sql_injection_free
+def new_password_endpoint(current_user: User) -> dict[str:str]:
+    fields = {"current_password": str, "new_password": str}
+    required_fields = ["current_password", "new_password"]
+    try:
+        args = parse_request(fields, 'json', required_fields)
+        user = new_password(current_user.id, **args)
+        return generate_response(True, 'Password was successfully changed', None, 200), 200
+    except InvalidRequestParameters as e:
+        return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
+    except Exception as e:
+        return generate_response(False, 'Could not change password', None, 500, str(e)), 500
+    finally:
+        session.close()
