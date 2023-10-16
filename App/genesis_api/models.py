@@ -17,15 +17,24 @@ class BaseModel(db.Model):
         db.DateTime, nullable=False, default=datetime.utcnow)
     last_update = db.Column(db.DateTime, nullable=False,
                             default=datetime.utcnow, onupdate=datetime.utcnow)
-    
     def to_dict(self) -> dict:
-        """
-        Returns a dictionary representation of the model.
-        """
-        return {
-            column.name: getattr(self, column.name)
-            for column in self.__table__.columns
-        }
+            """
+            Returns a dictionary representation of the model.
+            """
+            def convert_value(value):
+            # Convert enums to their value (assuming it's serializable)
+                if isinstance(value, Enum):
+                    return value.value  # or str(value) if you want the enum's name instead
+                # Convert datetime objects to string in 'YYYY-MM-DD' format
+                if isinstance(value, datetime):
+                    return value.strftime('%Y-%m-%d')
+                # Add other conversions here if needed
+                return value
+
+            return {
+                column.name: convert_value(getattr(self, column.name))
+                for column in self.__table__.columns
+            }
     def __repr__(self) -> str:
         """
         Returns a string representation of the model.
@@ -91,6 +100,11 @@ medical_history_user_image_association = db.Table('MEDICAL_HISTORY_USER_IMAGE_AS
     db.Column('medical_history_id', db.Integer, db.ForeignKey('MEDICAL_HISTORY.id'), primary_key=True),
     db.Column('user_image_id', db.Integer, db.ForeignKey('USER_IMAGE.id'), primary_key=True)
 )
+
+medical_history_prescription_association = db.Table('MEDICAL_HISTORY_PRESCRIPTION_ASSOCIATION',
+                                                         db.Column('medical_history_id', db.Integer, db.ForeignKey('MEDICAL_HISTORY.id'), primary_key=True),
+                                                            db.Column('prescription_id', db.Integer, db.ForeignKey('PRESCRIPTION.id'), primary_key=True)
+                                                            )
 
 
 class User(BaseModel):
@@ -221,6 +235,7 @@ class MedicalHistory(BaseModel):
     # Relationships
     association = db.relationship("DoctorPatientAssociation", backref="medical_histories")
     user_images = db.relationship("UserImage", secondary=medical_history_user_image_association, backref="medical_histories")
+    prescriptions = db.relationship("Prescription", secondary=medical_history_prescription_association, backref="medical_histories")
 
 class FrequencyUnit(Enum):
     minute = 'minute'

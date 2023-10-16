@@ -11,6 +11,7 @@ CREATE TABLE `PRESCRIPTION` (
   `START_DATE` datetime NOT NULL COMMENT 'Start date of the medication',
   `END_DATE` datetime DEFAULT NULL COMMENT 'End date of the medication, can be NULL if indefinite or as needed',
   `NOTIFICATIONS_ENABLED` tinyint(1) DEFAULT '1' COMMENT 'Whether notifications for this prescription are enabled',
+  `STATUS` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Status of the medical history record',
   `CREATION_DATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date and time when the prescription was created',
   `LAST_UPDATE` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Date and time when the prescription was last updated',
   PRIMARY KEY (`ID`)

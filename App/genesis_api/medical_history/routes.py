@@ -17,12 +17,11 @@ Session = sessionmaker(bind=db.engine)
 @limiter.limit("30 per minute")  # Apply rate limiting
 def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
     fields = {"observation":str, "next_appointment":str, "diagnostic":str,  "symptoms":str,
-              "private_notes":str, "follow_up_required":bool, "patient_id":int, "user_image":int, }
+              "private_notes":str, "follow_up_required":bool, "patient_id":int, "user_image":int, "prescription":list}
     required_fields = ["next_appointment", "diagnostic",  "symptoms",
-                        "private_notes", "follow_up_required", "patient_id", "user_image"]
+                         "follow_up_required", "patient_id", "user_image"]
     
     try:
-        print(request.json.keys())
         args = parse_request(fields, 'json', required_fields)
         medical_history = create_medical_history_report(current_user.id,**args)
         return generate_response(True, 'Medical History was successfully created', medical_history, 201), 201
@@ -39,16 +38,13 @@ def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
 @token_required
 @limiter.limit("5 per minute")  # Apply rate limiting
 def get_medical_history_endpoint(current_user: User, patient_id: int) -> dict[str:str]:
-    session = Session()
     
     try:
         # Assuming there's a function to retrieve medical history in utils
-        medical_history = get_medical_history_by_patient(session, current_user, patient_id)
+        medical_history = get_medical_history_by_patient(current_user, patient_id)
         if medical_history:
             return generate_response(True, 'Medical History retrieved successfully', medical_history, 200), 200
         else:
             return generate_response(False, 'Medical History not found', None, 404), 404
     except Exception as e:
         return generate_response(False, 'Could not retrieve Medical History', None, 500, str(e)), 500
-    finally:
-        session.close()
