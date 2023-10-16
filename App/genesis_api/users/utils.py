@@ -413,7 +413,6 @@ def create_doctor_patient_association( doctor_id: int, patient_username: int) ->
     association = DoctorPatientAssociation(doctor_id=doctor_id, patient_id=patient_id)
     db.session.add(association)
     db.session.commit()
-b
 
 def get_patients() -> list[User]:
     """ Get all the patients associated with a doctor """
@@ -448,11 +447,11 @@ def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
 
     return [image.to_dict() for image in images]
 
-def new_password(session: any,  user_id: int, current_password: str, new_password: str) -> User:
-    user = session.query(User).filter(User.id == user_id).first()
+def new_password( user_id: int, current_password: str, new_password: str) -> User:
+    user = db.session.query(User).filter(User.id == user_id).first()
     if user and user.check_password(current_password):
         user.password_hash = generate_password_hash(new_password).decode('utf-8')
-        session.commit()
+        db.session.commit()
         return user
 
     else:

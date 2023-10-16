@@ -181,8 +181,12 @@ def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: in
             raise ElementNotFoundError('Medical history report not found')
         
         # in the existent medical history report, add the feedback
-        medical_history.feedback = feedback
+        medical_history.patient_feedback = feedback
         db.session.commit()
+
+        # print updated medical history report
+
+
 
     except Exception as e:
         logging.exception("An error occurred while sending feedback to a patient: %s", e)
