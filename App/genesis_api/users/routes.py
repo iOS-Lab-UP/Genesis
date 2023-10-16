@@ -8,12 +8,15 @@ from genesis_api import db, limiter, cache
 
 
 user = Blueprint('user', __name__)
+executor = ThreadPoolExecutor(2)
+
 
 
 @user.route('/sign_up', methods=['POST'])
 @limiter.limit("5 per minute")  # Apply rate limiting
 @sql_injection_free
 def sign_up_endpoint() -> dict[str:str]:
+
     fields = {"name": str, "username": str, "email": str, "password": str,
               "birth_date": str, "profile_id": int, "cedula": str}
     required_fields = ["name", "username", "email",
@@ -24,7 +27,7 @@ def sign_up_endpoint() -> dict[str:str]:
         user = create_user(**args)
         if user:
             verification_code = generate_verification_code(user['id'])
-            send_verification_code(user, verification_code.code)
+            send_verification_code(executor, user, verification_code.code)
 
         return generate_response(True, 'User was successfully created', user, 201), 201
     except InvalidRequestParameters as e:

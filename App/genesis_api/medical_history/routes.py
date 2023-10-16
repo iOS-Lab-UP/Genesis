@@ -34,9 +34,12 @@ def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
 
 
 
+
+
 @medical_history.route('get_medical_history/<int:patient_id>', methods=['GET'])
 @token_required
-@limiter.limit("5 per minute")  # Apply rate limiting
+@limiter.limit("30 per minute")  # Apply rate limiting
+@cache.cached(timeout=300, key_prefix='medical_history')
 def get_medical_history_endpoint(current_user: User, patient_id: int) -> dict[str:str]:
     
     try:

@@ -11,12 +11,16 @@ from datetime import datetime
 from smtplib import SMTPException
 from email.message import EmailMessage
 from sqlalchemy.exc import SQLAlchemyError
+from concurrent.futures import ThreadPoolExecutor
+
+
 
 import random
 import logging
 import requests
 import ssl
 import smtplib
+
 
 
 def create_user(name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
@@ -236,7 +240,7 @@ def update_verification_code( user_id: User) -> str:
         raise
 
 
-def send_verification_code(user: dict[User], code: str) -> None:
+def send_verification_code(executor, user: dict[User], code: str) -> None:
     """Send a verification code to the given email."""
     mail = EmailMessage()
     mail['From'] = Config.MAIL_EMAIL
@@ -256,7 +260,7 @@ def send_verification_code(user: dict[User], code: str) -> None:
     </body>
     </html>
     '''
-    send_email(mail, html)
+    executor.submit(send_email, mail, html)
 
 def send_email(mail, html):
     mail.set_payload(html)
