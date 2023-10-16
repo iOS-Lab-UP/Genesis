@@ -245,20 +245,90 @@ def send_verification_code(executor, user: dict[User], code: str) -> None:
     mail = EmailMessage()
     mail['From'] = Config.MAIL_EMAIL
     mail['To'] = user['email']
-    mail['Subject'] = 'Verification Code'
+    mail['Subject'] = 'DermAware Verification Code'
     mail.add_header('Content-Type', 'text/html',)
 
     html = f'''
-    <html>
-    <body>
-    <h2>Hello {user['name']}!</h2>
+<html>
+<head>
+<style>
+    body {{
+        margin: 0;
+        padding: 0;
+        background-color: #f6f6f6;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }}
 
-    Your verification code is <b>{code}</b>.
+    .email-container {{
+        max-width: 600px;
+        border: 1px solid #eeeeee;
+        background-color: #ffffff;
+        margin: 40px auto;
+        border-radius: 6px;
+        box-shadow: 0 6px 12px rgba(0,0,0,.1);
+    }}
 
-    Please enter this code to verify your account.
+    .email-header {{
+        padding: 20px 40px;
+        background-color: #6cb4f0;
+        color: white;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+        font-size: 30px;
+    }}
 
-    </body>
-    </html>
+    .email-body {{
+        padding: 40px 40px;
+    }}
+
+    .verification-code {{
+        display: inline-block;
+        padding: 10px;
+        background-color: #e0e0e0;
+        color: #333333;
+        font-weight: bold;
+        margin-top: 10px;
+        border-radius: 4px;
+    }}
+
+    .email-footer {{
+        padding: 20px 40px;
+        background-color: #f6f6f6;
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+    }}
+</style>
+</head>
+<body>
+
+<table align="center" cellpadding="0" cellspacing="0" class="email-container">
+    <tr>
+        <td class="email-header" align="center">
+            <b>Welcome to DermAware!<b>
+        </td>
+    </tr>
+    <tr>
+        <td class="email-body">
+            <!-- Image added here -->
+            <h2>Hello {user['name']}!</h2>
+            <p>We're excited to have you join the DermAware community.</p>
+            <p>Your DermAware account verification code is:</p>
+            <span class="verification-code">{code}</span>
+            <p>Please enter this code to complete the verification process. If you did not request this code, please ignore this email.</p>
+        </td>
+    </tr>
+    <tr>
+        <td class="email-footer">
+            &copy; 2023 Genesis. All rights reserved.
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
     '''
     executor.submit(send_email, mail, html)
 
