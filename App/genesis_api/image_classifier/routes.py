@@ -109,12 +109,22 @@ def get_image_endpoint(current_user: User, image_id: int) -> dict[str:str]:
     # Return the encoded image
     return generate_response(True, 'Image successfully retrieved', {'image': image}, 200)
 
-@image_classifier.route('/get_doctor_patient_files', methods=['GET'])
+@image_classifier.route('/get_user_images_data', methods=['GET'])
 @token_required
-def get_doctor_patient_files_endpoint(current_user: User) -> dict[str:str]:
-    session = Session()
+def get_user_image_endpoint(current_user: User) -> dict[str:str]:
+    # Retrieve the user
+    if not current_user:
+        return generate_response(False, 'User not found', None, 404), 404
+
+    # Get the image
+    return generate_response(True, 'Image successfully retrieved', {'image': get_user_image(current_user)
+}, 200)
+
+@image_classifier.route('/get_doctor_patient_files/<patient_id>', methods=['GET'])
+@token_required
+def get_doctor_patient_files_endpoint(current_user: User, patient_id) -> dict[str:str]:
     try:
-        files = get_doctor_patient_files(session, current_user.id)
+        files = get_doctor_patient_files(current_user.id, patient_id)
         return generate_response(True, 'Files retrieved', files, 200), 200
     except Exception as e:
         return generate_response(False, 'Could not get files', None, 500, str(e)), 500

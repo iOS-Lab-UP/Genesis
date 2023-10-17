@@ -57,6 +57,8 @@ def get_image(user: User, image_id: int):
     # Retrieve the Image record
     image = Image.query.get(user_image.image_id)
 
+    
+
     if not image:
         return None, 'Image not found'
 
@@ -71,13 +73,33 @@ def get_image_data(id: int) -> dict[str:str]:
     # Retrieve the Image record
 
     try:
+        
         return Image.get_data(id)
     except Exception as e:
         logging.error(e)
         return None
     
 
-def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
+def get_user_image(user: User) -> list[dict[str:str]]:
+    # Get all UserImage records for this user
+    user_images = UserImage.query.filter_by(user_id=user.id).all()
+
+    # Extract the image IDs
+    image_data = []
+    for user_image in user_images:
+        image_info = Image.get_data(user_image.image_id).to_dict()
+     # Encode the image to base64
+        with open(os.path.join(Config.UPLOAD_FOLDER, image_info['name']), "rb") as img_file:
+            encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
+        image_info['image'] = encoded_string
+
+        if image_info is None:
+            return None
+        image_data.append(image_info)
+
+    return image_data
+
+def get_doctor_patient_files(doctor_id: int, patient_id:int) -> list[str]:
     """ Get all the images associated with a doctor and a patient """
 
     # Get all the patients associated with the doctor
