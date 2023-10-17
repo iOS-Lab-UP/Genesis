@@ -1,17 +1,22 @@
-from genesis_api import db
-from genesis_api.config import Config
-from genesis_api.tools.utils import *
-from genesis_api.tools.handlers import *
-from werkzeug.utils import secure_filename
-from genesis_api.models import *
-
-import base64
-from flask import send_from_directory
-
+# Standard library imports
 import os
 import logging
-from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional
+
+# Third-party library imports
+import base64
+from flask import send_from_directory
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.utils import secure_filename
+
+# Local imports
+from genesis_api import db
+from genesis_api.config import Config
+from genesis_api.models import *
+from genesis_api.tools.utils import *
+from genesis_api.tools.handlers import *
+
+
 
 
 def save_image(user, image_file):
@@ -80,8 +85,7 @@ def get_image_data(id: int) -> dict[str:str]:
         logging.error(e)
         return None
     
-
-def get_user_image(user: User, image_id:Optional[int]=None) -> list[dict[str:str]]:
+def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str, str]]:
     # Get all UserImage records for this user
     user_images = UserImage.query.filter_by(user_id=user.id).all()
 
@@ -90,8 +94,14 @@ def get_user_image(user: User, image_id:Optional[int]=None) -> list[dict[str:str
     if not image_id:
         for user_image in user_images:
             image_info = Image.get_data(user_image.image_id).to_dict()
-        # Encode the image to base64
-            with open(os.path.join(Config.UPLOAD_FOLDER, image_info['name']), "rb") as img_file:
+            image_path = os.path.join(Config.UPLOAD_FOLDER, image_info['name'])
+
+            # Resize the image to a maximum size (e.g., 300x300 pixels)
+            max_size = (300, 300)
+            resize_image(image_path, max_size)
+
+            # Encode the resized image to base64
+            with open(image_path, "rb") as img_file:
                 encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
             image_info['image'] = encoded_string
 
@@ -100,8 +110,14 @@ def get_user_image(user: User, image_id:Optional[int]=None) -> list[dict[str:str
             image_data.append(image_info)
     else:
         image_info = Image.get_data(image_id).to_dict()
-        # Encode the image to base64
-        with open(os.path.join(Config.UPLOAD_FOLDER, image_info['name']), "rb") as img_file:
+        image_path = os.path.join(Config.UPLOAD_FOLDER, image_info['name'])
+
+        # Resize the image to a maximum size (e.g., 300x300 pixels)
+        max_size = (300, 300)
+        resize_image(image_path, max_size)
+
+        # Encode the resized image to base64
+        with open(image_path, "rb") as img_file:
             encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
         image_info['image'] = encoded_string
 

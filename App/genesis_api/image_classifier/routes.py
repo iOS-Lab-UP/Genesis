@@ -4,13 +4,12 @@ from genesis_api.tools.handlers import *
 from genesis_api.image_classifier.utils import *
 from genesis_api.tools.utils import generate_response
 from genesis_api.security import *
-from genesis_api import db
+from genesis_api import  limiter, cache
 import re
 import json
 
 
 image_classifier = Blueprint('image_classifier', __name__)
-Session = sessionmaker(bind=db.engine)
 
 
 @image_classifier.route('/upload_image', methods=['POST'])
@@ -38,7 +37,6 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
             try:
                 # Parse the JSON string to convert it into a Python dictionary
                 diagnostic_dict = json.loads(diagnostic)
-                print(diagnostic_dict)
             except json.JSONDecodeError:
                 return jsonify(success=False, message="Invalid JSON in 'diagnostic' field"), 400
 
@@ -95,7 +93,9 @@ def get_user_images_endpoint(current_user: User) -> dict[str:str]:
 
 @image_classifier.route('/get_image/<image_id>', methods=['GET'])
 @token_required
-def get_image_endpoint(current_user: User, image_id: int) -> dict[str:str]:
+@cache.cached(key_prefix='image_{image_id}',timeout=3600)
+@limiter.limit("15 per minute")
+def get_user_image_by_id_endpoint(current_user: User, image_id: int) -> dict[str:str]:
     # Retrieve the user
     if not current_user:
         return generate_response(False, 'User not found', None, 404), 404
@@ -103,14 +103,13 @@ def get_image_endpoint(current_user: User, image_id: int) -> dict[str:str]:
 
 @image_classifier.route('/get_user_images_data', methods=['GET'])
 @token_required
+@cache.cached(key_prefix='user_images_data_{current_user.id}',timeout=3600)
+@limiter.limit("15 per minute")
 def get_user_image_endpoint(current_user: User) -> dict[str:str]:
     # Retrieve the user
     if not current_user:
         return generate_response(False, 'User not found', None, 404), 404
-
-    # Get the image
-    return generate_response(True, 'Image successfully retrieved', {'image': get_user_image(current_user)
-}, 200)
+    return generate_response(True, 'Image successfully retrieved', {'images': get_user_image(current_user)}, 200)
 
 @image_classifier.route('/get_doctor_patient_files/<patient_id>', methods=['GET'])
 @token_required

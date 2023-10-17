@@ -8,6 +8,7 @@ from flask_restful import reqparse
 from werkzeug.exceptions import BadRequest
 from werkzeug.datastructures import FileStorage
 from email_validator import validate_email, EmailNotValidError
+from PIL import Image as PILImage
 
 import psutil
 
@@ -195,3 +196,7 @@ def is_username_valid(username):
     return True
 
 
+def resize_image(image_path, max_size):
+    with PILImage.open(image_path) as img:
+        img.thumbnail(max_size)
+        img.save(image_path)
