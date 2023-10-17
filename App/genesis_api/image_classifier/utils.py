@@ -11,6 +11,7 @@ from flask import send_from_directory
 import os
 import logging
 from sqlalchemy.exc import SQLAlchemyError
+from typing import Optional
 
 
 def save_image(user, image_file):
@@ -80,22 +81,31 @@ def get_image_data(id: int) -> dict[str:str]:
         return None
     
 
-def get_user_image(user: User) -> list[dict[str:str]]:
+def get_user_image(user: User, image_id:Optional[int]=None) -> list[dict[str:str]]:
     # Get all UserImage records for this user
     user_images = UserImage.query.filter_by(user_id=user.id).all()
 
     # Extract the image IDs
     image_data = []
-    for user_image in user_images:
-        image_info = Image.get_data(user_image.image_id).to_dict()
-     # Encode the image to base64
+    if not image_id:
+        for user_image in user_images:
+            image_info = Image.get_data(user_image.image_id).to_dict()
+        # Encode the image to base64
+            with open(os.path.join(Config.UPLOAD_FOLDER, image_info['name']), "rb") as img_file:
+                encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
+            image_info['image'] = encoded_string
+
+            if image_info is None:
+                return None
+            image_data.append(image_info)
+    else:
+        image_info = Image.get_data(image_id).to_dict()
+        # Encode the image to base64
         with open(os.path.join(Config.UPLOAD_FOLDER, image_info['name']), "rb") as img_file:
             encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
         image_info['image'] = encoded_string
 
-        if image_info is None:
-            return None
-        image_data.append(image_info)
+        image_data = image_info
 
     return image_data
 

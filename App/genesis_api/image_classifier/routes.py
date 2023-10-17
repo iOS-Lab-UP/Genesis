@@ -99,15 +99,7 @@ def get_image_endpoint(current_user: User, image_id: int) -> dict[str:str]:
     # Retrieve the user
     if not current_user:
         return generate_response(False, 'User not found', None, 404), 404
-
-    # Get the image
-    image, error = get_image(current_user, image_id)
-
-    if error:
-        return generate_response(False, error, None, 404), 404
-
-    # Return the encoded image
-    return generate_response(True, 'Image successfully retrieved', {'image': image}, 200)
+    return generate_response(True, 'Image successfully retrieved', get_user_image(current_user, image_id), 200)
 
 @image_classifier.route('/get_user_images_data', methods=['GET'])
 @token_required
