@@ -60,7 +60,7 @@ def resend_verification_code_endpoint(current_user: User) -> dict[str:str]:
     
     try:
         verification_code = generate_verification_code(current_user.id)
-        send_verification_code(current_user.to_dict(), verification_code.code)
+        send_verification_code(executor,current_user.to_dict(), verification_code.code)
         return generate_response(True, 'Verification code was successfully sent', None, 200), 200
     except Exception as e:
         return generate_response(False, 'Could not send verification code', None, 500, str(e)), 500
