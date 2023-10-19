@@ -191,7 +191,14 @@ class UserImage(BaseModel):
     image = db.relationship('Image', backref='user_image', lazy=True)
     user = db.relationship('User', backref='user_image', lazy=True)
 
-
+class MlDiagnostic(BaseModel):
+    """
+    A model class that....
+    """
+    __tablename__ = 'ML_DIAGNOSTIC'
+    sickness = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    precision = db.Column(db.Float, nullable=False)
 
 class DoctorPatientAssociation(BaseModel):
     """
