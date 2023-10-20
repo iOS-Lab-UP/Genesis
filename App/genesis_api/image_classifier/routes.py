@@ -41,10 +41,8 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
                 return jsonify(success=False, message="Invalid JSON in 'diagnostic' field"), 400
 
             # Now you can access the values in the dictionary
-            for prediction in diagnostic_dict:
-                sickness = prediction.get('sickness')
-                precision = prediction.get('precision')
-                print(f"Sickness: {sickness}, Precision: {precision}")
+            
+
         else:
             print("No diagnostic data found.")
         # Check if the required arguments are present
@@ -57,6 +55,8 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
 
         # Save the image and create a UserImage record
         user_image = save_image(current_user, file)
+        for prediction in diagnostic_dict:
+            create_mldiagnostic(prediction.get('sickness'), prediction.get('precision'), user_image.id)
 
         return generate_response(True, 'Image successfully uploaded', user_image.to_dict(), 201), 201
     else:

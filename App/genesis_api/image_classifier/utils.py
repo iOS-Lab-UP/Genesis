@@ -145,3 +145,14 @@ def get_doctor_patient_files(doctor_id: int, patient_id:int) -> list[str]:
         images.extend(patient_images)
 
     return [image.to_dict() for image in images]
+
+def create_mldiagnostic(**kwargs) -> MlDiagnostic:
+    #Define de ML directory
+    try :
+        ml_model = MlDiagnostic(**kwargs)
+        db.session.add(ml_model) 
+        db.session.commit()
+    except SQLAlchemyError as e:
+        logging.exception("An error occurred while saving an image: %s", e)
+        raise InternalServerError(e)
+    return ml_model
