@@ -414,17 +414,22 @@ def create_doctor_patient_association( doctor_id: int, patient_username: int) ->
     db.session.add(association)
     db.session.commit()
 
-def get_patients() -> list[User]:
-    """ Get all the patients associated with a doctor """
+def get_users_by_profile(profile_id: int) -> list[User]:
+    """ Get all the users with a given profile_id
+    Params:
+        profile_id: int -> 1: patient; 2: doctor
+    Returns:
+        list[User]
+      """
     try:
-
-        patients = [patient.to_dict() for patient in db.session.query(User).filter_by(profile_id=1).all()]
-        return patients
+        users = [user.to_dict() for user in db.session.query(User).filter_by(profile_id=profile_id).all()]
+        return users
     except Exception as e:
         logging.error(e)
         db.session.rollback()
         raise
 
+    d
 
 
 def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
@@ -446,6 +451,20 @@ def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
         images.extend(patient_images)
 
     return [image.to_dict() for image in images]
+
+def get_user_to_user_relation(profile_id:int, user_id:int) -> list[User]:
+    """Get all the users related to the user_id"""
+
+    try:
+        users = [user.to_dict() for user in db.session.query(User).\
+            join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
+            filter(DoctorPatientAssociation.doctor_id == user_id).\
+            all()]
+        return users
+    except Exception as e:
+        logging.error(e)
+        db.session.rollback()
+        raise
 
 def new_password( user_id: int, current_password: str, new_password: str) -> User:
     user = db.session.query(User).filter(User.id == user_id).first()
