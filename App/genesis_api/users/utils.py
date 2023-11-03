@@ -212,7 +212,6 @@ def generate_verification_code( current_user_id: User) -> str:
 
         return verificaton_code
     except Exception as e:
-        session.rollback()
         logging.error(e)
         raise
 
@@ -372,7 +371,6 @@ def verify_code( user_id: int, code: str) -> User:
             return user
     except Exception as e:
         logging.error(e)
-        session.rollback()  # Rollback the session in case of error
         raise
 
 def send_doctor_patient_association_email(session: any, doctor_id: int, patient_username: str) -> None:
@@ -452,19 +450,17 @@ def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
 
     return [image.to_dict() for image in images]
 
-def get_user_to_user_relation(profile_id:int, user_id:int) -> list[User]:
-    """Get all the users related to the user_id"""
+def get_user_to_user_relation(user_id:int) -> list[User]:
+    """Get all the users with profile_id related to the user_id"""
 
     try:
-        users = [user.to_dict() for user in db.session.query(User).\
-            join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
-            filter(DoctorPatientAssociation.doctor_id == user_id).\
-            all()]
+        users = [user.to_dict() for user in db.session.query(User).join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).filter(DoctorPatientAssociation.doctor_id == user_id).all()]
         return users
     except Exception as e:
         logging.error(e)
         db.session.rollback()
         raise
+
 
 def new_password( user_id: int, current_password: str, new_password: str) -> User:
     user = db.session.query(User).filter(User.id == user_id).first()

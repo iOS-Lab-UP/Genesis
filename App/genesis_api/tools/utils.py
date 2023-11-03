@@ -32,18 +32,6 @@ def server_status() -> str:
     return status
 
 
-@contextmanager
-def session_scope():
-    """Provide a transactional scope around a series of operations."""
-    session = db.session
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 def color(color: int, text: str) -> str:

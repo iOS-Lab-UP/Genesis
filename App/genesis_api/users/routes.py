@@ -143,11 +143,20 @@ def delete_user() -> dict[str:str]:
 @token_required
 def get_patients_endpoint() -> dict[str:str]:
     try:
-        patients = get_patients()
+        patients = get_users_by_profile(1)
         return generate_response(True, 'Patients retrieved', patients, 200), 200
     except Exception as e:
         return generate_response(False, 'Could not get patients', None, 500, str(e)), 500
 
+@user.route('/get_user_to_user_relation', methods=['GET'])
+@token_required
+def get_patient_doctors_endpoint(user_id:int) -> dict[str:str]:
+    try:
+        users = get_user_to_user_relation(user_id.id)
+        return generate_response(True, 'Users retrieved', users, 200), 200
+    except Exception as e:
+        return generate_response(False, 'Could not get doctors', None, 500, str(e)), 500
+    
 @user.route('/create_doctor_patient_association', methods=['POST'])
 @token_required
 @sql_injection_free
