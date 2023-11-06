@@ -94,7 +94,6 @@ def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
 
 
 @user.route('/get_user_data', methods=['GET'])
-@cache.cached(key_prefix='user_data_{current_user.id}', timeout=3600)
 @token_required
 def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Get user information'''
