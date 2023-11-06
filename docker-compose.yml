@@ -40,6 +40,7 @@ services:
       - app-tier
 
   redis_rate_limiting:
+    restart: always
     image: "redis"
     container_name: redis_rate_limiting
     ports:
@@ -48,6 +49,7 @@ services:
       - app-tier
 
   redis_sessions:
+    restart: always
     image: "redis"
     container_name: redis_sessions
     ports:
