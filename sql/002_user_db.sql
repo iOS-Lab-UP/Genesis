@@ -47,6 +47,22 @@ CREATE TABLE `DOCTOR_PATIENT_ASSOCIATION` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Table containing doctor-patient association information';
 
 
+INSERT INTO `USER` (`ID`, `NAME`, `USERNAME`, `EMAIL`, `PASSWORD_HASH`, `BIRTH_DATE`, `CEDULA`, `PROFILE_ID`, `STATUS`, `CREATION_DATE`, `LAST_UPDATE`) VALUES
+(1,'Luis Cedillo Maldonado',	'luisced',	'luisitocedillo@gmail.com',	'$2b$12$cHA.Gji6IG1iKTqh32pZbOMn4dRGfoMEK5p7lIsr0JvEaTUPS5MaW',	'2003-02-01',	NULL,	1,	1,	'2023-11-07',	'2023-11-07 13:40:55'),
+ (2,'Jane Smith', 'jane_smith', 'jane.smith@example.com', 'hashed_password2', '1985-08-25', NULL, 2, 0, '2023-01-11', '2023-11-07 10:15:00'),
+  (3,'Dr. Smith', 'dr_smith', 'dr.smith@example.com', 'hashed_password3', '1975-03-12', '12345', 3, 1, '2023-01-12', '2023-11-07 11:45:00'),
+  (4,'Dr. Johnson', 'dr_johnson', 'dr.johnson@example.com', 'hashed_password4', '1980-11-28', '54321', 3, 0, '2023-01-13', '2023-11-07 12:30:00'),
+  (5,'Mary Brown', 'mary_brown', 'mary.brown@example.com', 'hashed_password5', '1995-09-20', NULL, 4, 1, '2023-01-14', '2023-11-07 13:20:00');
+
+-- Dummy data for the DOCTOR_PATIENT_ASSOCIATION table
+INSERT INTO `DOCTOR_PATIENT_ASSOCIATION` (`DOCTOR_ID`, `PATIENT_ID`, `STATUS`, `CREATION_DATE`, `LAST_UPDATE`)
+VALUES
+  (3, 1, 1, '2023-01-15', '2023-11-07 14:10:00'),
+  (3, 2, 1, '2023-01-16', '2023-11-07 15:00:00'),
+  (4, 2, 0, '2023-01-17', '2023-11-07 16:30:00'),
+  (5, 3, 0, '2023-01-18', '2023-11-07 17:15:00');
+
+
 
 
 

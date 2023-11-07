@@ -450,12 +450,24 @@ def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
 
     return [image.to_dict() for image in images]
 
-def get_user_to_user_relation(user_id:int) -> list[User]:
+def get_user_to_user_relation(user_id: int) -> list[User]:
     """Get all the users with profile_id related to the user_id"""
 
     try:
-        users = [user.to_dict() for user in db.session.query(User).join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).filter(DoctorPatientAssociation.doctor_id == user_id).all()]
-        return users
+        associations = db.session.query(DoctorPatientAssociation).filter(
+            (DoctorPatientAssociation.doctor_id == user_id) | (DoctorPatientAssociation.patient_id == user_id)
+        ).all()
+
+        # Extract the IDs of related users
+        related_user_ids = [association.doctor_id if association.doctor_id != user_id else association.patient_id for association in associations]
+
+        # Retrieve the related users based on their IDs
+        related_users = db.session.query(User).filter(User.id.in_(related_user_ids)).all()
+
+        # Convert related users to a list of dictionaries
+        related_users_dicts = [user.to_dict() for user in related_users]
+
+        return related_users_dicts
     except Exception as e:
         logging.error(e)
         db.session.rollback()
