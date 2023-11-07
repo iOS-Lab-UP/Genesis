@@ -148,6 +148,7 @@ def get_doctor_patient_files(doctor_id: int, patient_id:int) -> list[str]:
 
 def create_mldiagnostic(**kwargs) -> MlDiagnostic:
     #Define de ML directory
+    print(**kwargs)
     try :
         ml_model = MlDiagnostic(**kwargs)
         db.session.add(ml_model) 
