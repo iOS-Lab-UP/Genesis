@@ -4,7 +4,7 @@ from genesis_api.tools.handlers import *
 from genesis_api.image_classifier.utils import *
 from genesis_api.tools.utils import generate_response
 from genesis_api.security import *
-from genesis_api import  limiter, cache
+from genesis_api import limiter, cache
 import re
 import json
 
@@ -18,7 +18,6 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
     # Check if the post request has the file part
     if 'file' not in request.files:
         return generate_response(False, 'No file part', None, 400), 400
-    
 
     file = request.files['file']
 
@@ -41,7 +40,6 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
                 return jsonify(success=False, message="Invalid JSON in 'diagnostic' field"), 400
 
             # Now you can access the values in the dictionary
-            
 
         else:
             print("No diagnostic data found.")
@@ -56,13 +54,12 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
         # Save the image and create a UserImage record
         user_image = save_image(current_user, file)
         for prediction in diagnostic_dict:
-            create_mldiagnostic(prediction.get('sickness'), prediction.get('precision'), user_image.id)
+            create_mldiagnostic(prediction.get('sickness'),
+                                prediction.get('precision'), user_image.id)
 
         return generate_response(True, 'Image successfully uploaded', user_image.to_dict(), 201), 201
     else:
         return generate_response(False, 'File type not allowed', None, 400), 400
-    
-
 
 
 @image_classifier.route('/get_user_images', methods=['GET'])
@@ -90,10 +87,8 @@ def get_user_images_endpoint(current_user: User) -> dict[str:str]:
         return generate_response(False, str(e), None, 500), 500
 
 
-
 @image_classifier.route('/get_image/<image_id>', methods=['GET'])
 @token_required
-@cache.cached(key_prefix='image_{image_id}',timeout=3600)
 @limiter.limit("15 per minute")
 def get_user_image_by_id_endpoint(current_user: User, image_id: int) -> dict[str:str]:
     # Retrieve the user
@@ -101,15 +96,16 @@ def get_user_image_by_id_endpoint(current_user: User, image_id: int) -> dict[str
         return generate_response(False, 'User not found', None, 404), 404
     return generate_response(True, 'Image successfully retrieved', get_user_image(current_user, image_id), 200)
 
+
 @image_classifier.route('/get_user_images_data', methods=['GET'])
 @token_required
-@cache.cached(key_prefix='user_images_data_{current_user.id}',timeout=3600)
 @limiter.limit("15 per minute")
 def get_user_image_endpoint(current_user: User) -> dict[str:str]:
     # Retrieve the user
     if not current_user:
         return generate_response(False, 'User not found', None, 404), 404
     return generate_response(True, 'Image successfully retrieved', {'images': get_user_image(current_user)}, 200)
+
 
 @image_classifier.route('/get_doctor_patient_files/<patient_id>', methods=['GET'])
 @token_required

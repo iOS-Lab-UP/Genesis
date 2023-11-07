@@ -17,8 +17,6 @@ from genesis_api.tools.utils import *
 from genesis_api.tools.handlers import *
 
 
-
-
 def save_image(user, image_file):
     # Define the image directory
     try:
@@ -53,17 +51,17 @@ def allowed_file(filename: str) -> bool:
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def get_image(user: User, image_id: int):
     # Retrieve the UserImage record
-    user_image = UserImage.query.filter_by(user_id=user.id, image_id=image_id).first()
+    user_image = UserImage.query.filter_by(
+        user_id=user.id, image_id=image_id).first()
 
     if not user_image:
         return None, 'Image not found'
 
     # Retrieve the Image record
     image = Image.query.get(user_image.image_id)
-
-    
 
     if not image:
         return None, 'Image not found'
@@ -79,12 +77,13 @@ def get_image_data(id: int) -> dict[str:str]:
     # Retrieve the Image record
 
     try:
-        
+
         return Image.get_data(id)
     except Exception as e:
         logging.error(e)
         return None
-    
+
+
 def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str, str]]:
     # Get all UserImage records for this user
     user_images = UserImage.query.filter_by(user_id=user.id).all()
@@ -97,13 +96,17 @@ def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str,
             image_path = os.path.join(Config.UPLOAD_FOLDER, image_info['name'])
 
             # Resize the image to a maximum size (e.g., 300x300 pixels)
-            max_size = (300, 300)
+            max_size = (50, 50)
             resize_image(image_path, max_size)
 
             # Encode the resized image to base64
             with open(image_path, "rb") as img_file:
-                encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
+                encoded_string = base64.b64encode(
+                    img_file.read()).decode('utf-8')
             image_info['image'] = encoded_string
+
+            image_info['ml_diagnostic'] = [MlDiagnostic.get_data(
+                ml_id.id).to_dict() for ml_id in user_image.ml_diagnostics]
 
             if image_info is None:
                 return None
@@ -121,11 +124,18 @@ def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str,
             encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
         image_info['image'] = encoded_string
 
+        user_image = db.session.query(UserImage).filter(
+            UserImage.image_id == image_id).first()
+
+        image_info['ml_diagnostic'] = [
+            MlDiagnostic.get_data(ml_id.id).to_dict() for ml_id in user_image.ml_diagnostics]
+
         image_data = image_info
 
     return image_data
 
-def get_doctor_patient_files(doctor_id: int, patient_id:int) -> list[str]:
+
+def get_doctor_patient_files(doctor_id: int, patient_id: int) -> list[str]:
     """ Get all the images associated with a doctor and a patient """
 
     # Get all the patients associated with the doctor
@@ -133,7 +143,7 @@ def get_doctor_patient_files(doctor_id: int, patient_id:int) -> list[str]:
         join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
         filter(DoctorPatientAssociation.doctor_id == doctor_id).\
         all()
-    
+
     print(patients)
 
     # Get all the images associated with each patient
@@ -146,15 +156,18 @@ def get_doctor_patient_files(doctor_id: int, patient_id:int) -> list[str]:
 
     return [image.to_dict() for image in images]
 
-def create_mldiagnostic(sickness, precision, image_id) -> MlDiagnostic:
-    #Define de ML directory
-    try :
-        ml_model = MlDiagnostic(sickness=sickness, precision=precision, description="description")
-        db.session.add(ml_model) 
+
+def create_mldiagnostic(sickness, precision, user_image_id) -> MlDiagnostic:
+    # Define de ML directory
+    try:
+        ml_model = MlDiagnostic(
+            sickness=sickness, precision=precision, description="description")
+        db.session.add(ml_model)
         db.session.commit()
 
-        
-
+        # Create a new MlDiagnosticImage record
+        image = UserImage.get_data(user_image_id)
+        image.ml_diagnostics.append(ml_model)
 
     except SQLAlchemyError as e:
         logging.exception("An error occurred while saving an image: %s", e)

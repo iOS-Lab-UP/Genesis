@@ -1,7 +1,7 @@
 from genesis_api import db
 from sqlalchemy import Index
 from sqlalchemy.orm import joinedload, class_mapper
-from flask_bcrypt  import check_password_hash
+from flask_bcrypt import check_password_hash
 from datetime import datetime, timedelta
 from enum import Enum
 
@@ -17,24 +17,27 @@ class BaseModel(db.Model):
         db.DateTime, nullable=False, default=datetime.utcnow)
     last_update = db.Column(db.DateTime, nullable=False,
                             default=datetime.utcnow, onupdate=datetime.utcnow)
-    def to_dict(self) -> dict:
-            """
-            Returns a dictionary representation of the model.
-            """
-            def convert_value(value):
-            # Convert enums to their value (assuming it's serializable)
-                if isinstance(value, Enum):
-                    return value.value  # or str(value) if you want the enum's name instead
-                # Convert datetime objects to string in 'YYYY-MM-DD' format
-                if isinstance(value, datetime):
-                    return value.strftime('%Y-%m-%d')
-                # Add other conversions here if needed
-                return value
 
-            return {
-                column.name: convert_value(getattr(self, column.name))
-                for column in self.__table__.columns
-            }
+    def to_dict(self) -> dict:
+        """
+        Returns a dictionary representation of the model.
+        """
+        def convert_value(value):
+            # Convert enums to their value (assuming it's serializable)
+            if isinstance(value, Enum):
+                # or str(value) if you want the enum's name instead
+                return value.value
+            # Convert datetime objects to string in 'YYYY-MM-DD' format
+            if isinstance(value, datetime):
+                return value.strftime('%Y-%m-%d')
+            # Add other conversions here if needed
+            return value
+
+        return {
+            column.name: convert_value(getattr(self, column.name))
+            for column in self.__table__.columns
+        }
+
     def __repr__(self) -> str:
         """
         Returns a string representation of the model.
@@ -53,8 +56,8 @@ class BaseModel(db.Model):
         try:
             return cls.query.filter_by(id=obj_id, status=True).first()
         except:
-            return None 
-        
+            return None
+
     @classmethod
     def get_data_with_all_children(cls, session, **filters):
         """
@@ -82,7 +85,6 @@ class BaseModel(db.Model):
             print(f"An error occurred while retrieving data: {e}")
             return None
 
-
     @classmethod
     def _relationship_keys(cls) -> list:
         """
@@ -97,14 +99,25 @@ class BaseModel(db.Model):
 """""""""""""""""""""
 
 medical_history_user_image_association = db.Table('MEDICAL_HISTORY_USER_IMAGE_ASSOCIATION',
-    db.Column('medical_history_id', db.Integer, db.ForeignKey('MEDICAL_HISTORY.id'), primary_key=True),
-    db.Column('user_image_id', db.Integer, db.ForeignKey('USER_IMAGE.id'), primary_key=True)
-)
+                                                  db.Column('medical_history_id', db.Integer, db.ForeignKey(
+                                                      'MEDICAL_HISTORY.id'), primary_key=True),
+                                                  db.Column('user_image_id', db.Integer, db.ForeignKey(
+                                                      'USER_IMAGE.id'), primary_key=True)
+                                                  )
 
 medical_history_prescription_association = db.Table('MEDICAL_HISTORY_PRESCRIPTION_ASSOCIATION',
-                                                         db.Column('medical_history_id', db.Integer, db.ForeignKey('MEDICAL_HISTORY.id'), primary_key=True),
-                                                            db.Column('prescription_id', db.Integer, db.ForeignKey('PRESCRIPTION.id'), primary_key=True)
-                                                            )
+                                                    db.Column('medical_history_id', db.Integer, db.ForeignKey(
+                                                        'MEDICAL_HISTORY.id'), primary_key=True),
+                                                    db.Column('prescription_id', db.Integer, db.ForeignKey(
+                                                        'PRESCRIPTION.id'), primary_key=True)
+                                                    )
+
+user_image_ml_diagnostic_association = db.Table('USER_IMAGE_ML_DIAGNOSTIC_ASSOCIATION',
+                                                db.Column('user_image', db.Integer, db.ForeignKey(
+                                                    'USER_IMAGE.id'), primary_key=True),
+                                                db.Column('ml_diagnostic', db.Integer, db.ForeignKey(
+                                                    'ML_DIAGNOSTIC.id'), primary_key=True)
+                                                )
 
 
 class User(BaseModel):
@@ -123,20 +136,20 @@ class User(BaseModel):
     password_hash = db.Column(db.String(60), nullable=False)
     birth_date = db.Column(db.Date)
     cedula = db.Column(db.String(255), nullable=True)
-    profile_id = db.Column(db.Integer, db.ForeignKey('PROFILE.id'), nullable=False)
+    profile_id = db.Column(db.Integer, db.ForeignKey(
+        'PROFILE.id'), nullable=False)
 
-     # Relationships
-    patients = db.relationship('DoctorPatientAssociation', back_populates='doctor', foreign_keys='DoctorPatientAssociation.doctor_id')
-    doctor = db.relationship('DoctorPatientAssociation', back_populates='patient', uselist=False, foreign_keys='DoctorPatientAssociation.patient_id')
-
+    # Relationships
+    patients = db.relationship('DoctorPatientAssociation', back_populates='doctor',
+                               foreign_keys='DoctorPatientAssociation.doctor_id')
+    doctor = db.relationship('DoctorPatientAssociation', back_populates='patient',
+                             uselist=False, foreign_keys='DoctorPatientAssociation.patient_id')
 
     def check_password(self, password: str) -> bool:
         """
         Checks if the password matches the user's password.
         """
         return check_password_hash(self.password_hash, password)
-    
-
 
 
 class Profile(BaseModel):
@@ -145,6 +158,7 @@ class Profile(BaseModel):
     """
     __tablename__ = 'PROFILE'
     profile = db.Column(db.String(255), nullable=False)
+
 
 class VerificationCode(BaseModel):
     """
@@ -160,7 +174,6 @@ class VerificationCode(BaseModel):
         """
 
         db.session.delete(self)
-
 
     def is_expired(self) -> bool:
         """
@@ -191,6 +204,11 @@ class UserImage(BaseModel):
     image = db.relationship('Image', backref='user_image', lazy=True)
     user = db.relationship('User', backref='user_image', lazy=True)
 
+    # Relationships
+    ml_diagnostics = db.relationship(
+        "MlDiagnostic", secondary=user_image_ml_diagnostic_association, backref="user_images")
+
+
 class MlDiagnostic(BaseModel):
     """
     A model class that....
@@ -199,6 +217,7 @@ class MlDiagnostic(BaseModel):
     sickness = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     precision = db.Column(db.Float, nullable=False)
+
 
 class DoctorPatientAssociation(BaseModel):
     """
@@ -218,34 +237,40 @@ class MedicalHistory(BaseModel):
     A model class that represents a medical history in the application.
     """
     __tablename__ = 'MEDICAL_HISTORY'
-    
+
     # Foreign key
-    association_id = db.Column(db.Integer, db.ForeignKey('DOCTOR_PATIENT_ASSOCIATION.id'), nullable=False)
-    
+    association_id = db.Column(db.Integer, db.ForeignKey(
+        'DOCTOR_PATIENT_ASSOCIATION.id'), nullable=False)
+
     # Observation field
     observation = db.Column(db.Text, nullable=True)
-    
+
     # Timestamps
-    date_of_visit = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_of_visit = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
     next_appointment_date = db.Column(db.Date, nullable=False)
-    
+
     # Details
     diagnostic = db.Column(db.Text)
     symptoms = db.Column(db.Text)
-    
+
     # Confidential Notes
     private_notes = db.Column(db.Text, nullable=True)
-    
+
     # Follow-up
     follow_up_required = db.Column(db.Boolean, default=False)
 
     # Patient Feedback
     patient_feedback = db.Column(db.Text, nullable=True, default=None)
-    
+
     # Relationships
-    association = db.relationship("DoctorPatientAssociation", backref="medical_histories")
-    user_images = db.relationship("UserImage", secondary=medical_history_user_image_association, backref="medical_histories")
-    prescriptions = db.relationship("Prescription", secondary=medical_history_prescription_association, backref="medical_histories")
+    association = db.relationship(
+        "DoctorPatientAssociation", backref="medical_histories")
+    user_images = db.relationship(
+        "UserImage", secondary=medical_history_user_image_association, backref="medical_histories")
+    prescriptions = db.relationship(
+        "Prescription", secondary=medical_history_prescription_association, backref="medical_histories")
+
 
 class FrequencyUnit(Enum):
     minute = 'minute'
@@ -261,11 +286,19 @@ class Prescription(BaseModel):
     """
     __tablename__ = 'PRESCRIPTION'
 
-    treatment = db.Column(db.String(255), nullable=False, comment='Name of the medicine prescribed')
-    indications = db.Column(db.Text, comment='Detailed indications for the patient')
-    dosage = db.Column(db.String(100), nullable=False, comment='Dosage of the medicine')
-    frequency_value = db.Column(db.Integer, nullable=False, comment='The numerical value of the frequency (e.g., every 2 hours, every 3 days, etc.)')
-    frequency_unit = db.Column(db.Enum(FrequencyUnit), nullable=False, comment='The unit of time for the frequency (minutes, hours, days, weeks, or months)')
-    start_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, comment='Start date of the medication')
-    end_date = db.Column(db.DateTime, comment='End date of the medication, can be NULL if indefinite or as needed')
-    notifications_enabled = db.Column(db.Boolean, default=True, comment='Whether notifications for this prescription are enabled')
+    treatment = db.Column(db.String(255), nullable=False,
+                          comment='Name of the medicine prescribed')
+    indications = db.Column(
+        db.Text, comment='Detailed indications for the patient')
+    dosage = db.Column(db.String(100), nullable=False,
+                       comment='Dosage of the medicine')
+    frequency_value = db.Column(
+        db.Integer, nullable=False, comment='The numerical value of the frequency (e.g., every 2 hours, every 3 days, etc.)')
+    frequency_unit = db.Column(db.Enum(FrequencyUnit), nullable=False,
+                               comment='The unit of time for the frequency (minutes, hours, days, weeks, or months)')
+    start_date = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow, comment='Start date of the medication')
+    end_date = db.Column(
+        db.DateTime, comment='End date of the medication, can be NULL if indefinite or as needed')
+    notifications_enabled = db.Column(
+        db.Boolean, default=True, comment='Whether notifications for this prescription are enabled')
