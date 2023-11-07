@@ -149,7 +149,7 @@ def get_doctor_patient_files(doctor_id: int, patient_id:int) -> list[str]:
 def create_mldiagnostic(sickness, precision, image_id) -> MlDiagnostic:
     #Define de ML directory
     try :
-        ml_model = MlDiagnostic(sickness, precision)
+        ml_model = MlDiagnostic(sickness=sickness, precision=precision, description="description")
         db.session.add(ml_model) 
         db.session.commit()
 
