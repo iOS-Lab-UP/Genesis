@@ -45,8 +45,6 @@ def upload_image_endpoint(current_user: User) -> dict[str:str]:
             print("No diagnostic data found.")
         # Check if the required arguments are present
 
-        # Perform further validation on element and precision if needed
-
         # Retrieve the user
         if not current_user:
             return generate_response(False, 'User not found', None, 404), 404

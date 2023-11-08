@@ -144,8 +144,6 @@ def get_doctor_patient_files(doctor_id: int, patient_id: int) -> list[str]:
         filter(DoctorPatientAssociation.doctor_id == doctor_id).\
         all()
 
-    print(patients)
-
     # Get all the images associated with each patient
     images = []
     for patient in patients:
