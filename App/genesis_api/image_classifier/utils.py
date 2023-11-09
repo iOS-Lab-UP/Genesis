@@ -96,7 +96,7 @@ def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str,
             image_path = os.path.join(Config.UPLOAD_FOLDER, image_info['name'])
 
             # Resize the image to a maximum size (e.g., 300x300 pixels)
-            max_size = (50, 50)
+            max_size = (400, 400)
             resize_image(image_path, max_size)
 
             # Encode the resized image to base64
