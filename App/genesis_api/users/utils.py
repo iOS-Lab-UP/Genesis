@@ -97,7 +97,7 @@ def get_user(id: int = None, username: str = None) -> dict[str:str]:
             user = User.query.get(id)
 
         if user:
-            return user.get_data()
+            return user.get_data(id)
         else:
             return None
 
