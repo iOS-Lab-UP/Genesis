@@ -68,19 +68,8 @@ def get_user_images_endpoint(current_user: User) -> dict[str:str]:
         if not current_user:
             return generate_response(False, 'User not found', None, 404), 404
 
-        # Get all UserImage records for this user
-        user_images = UserImage.query.filter_by(user_id=current_user.id).all()
-
-        # Extract the image IDs
-        image_data = []
-        for user_image in user_images:
-            image_info = get_image_data(user_image.image_id)
-            if image_info is None:
-                return generate_response(False, 'Error retrieving image data', None, 500), 500
-            image_data.append(image_info.to_dict())
-
         # Return the image data
-        return generate_response(True, 'Image data successfully retrieved', {'images': image_data}, 200)
+        return generate_response(True, 'Image data successfully retrieved', {'images': get_user_images_data(current_user)}, 200)
     except Exception as e:
         return generate_response(False, str(e), None, 500), 500
 

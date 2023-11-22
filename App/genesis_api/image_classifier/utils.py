@@ -84,6 +84,30 @@ def get_image_data(id: int) -> dict[str:str]:
         return None
 
 
+def get_user_images_data(current_user: id) -> list[dict[str, str]]:
+    # Get all UserImage records for this user
+    user_images = UserImage.query.filter_by(user_id=current_user.id).all()
+
+    # Extract the image IDs
+    image_data = []
+    for user_image in user_images:
+        image_info = Image.get_data(user_image.image_id).to_dict()
+        image_path = os.path.join(Config.UPLOAD_FOLDER, image_info['name'])
+
+        # Encode the resized image to base64
+        with open(image_path, "rb") as img_file:
+            encoded_string = base64.b64encode(
+                img_file.read()).decode('utf-8')
+        image_info['image'] = encoded_string
+
+        image_info['ml_diagnostic'] = [MlDiagnostic.get_data(
+            ml_id.id).to_dict() for ml_id in user_image.ml_diagnostics]
+
+        image_data.append(image_info)
+
+    return image_data
+
+
 def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str, str]]:
     # Get all UserImage records for this user
     user_images = UserImage.query.filter_by(user_id=user.id).all()
@@ -104,9 +128,8 @@ def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str,
             image_info['ml_diagnostic'] = [MlDiagnostic.get_data(
                 ml_id.id).to_dict() for ml_id in user_image.ml_diagnostics]
 
-            if image_info is None:
-                return None
-            image_data.append(image_info)
+            image_data.append(image_info['image'], "here")
+
     else:
         image_info = Image.get_data(image_id).to_dict()
         image_path = os.path.join(Config.UPLOAD_FOLDER, image_info['name'])
