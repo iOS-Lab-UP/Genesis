@@ -305,7 +305,6 @@ class Prescription(BaseModel):
 
 
 class Medicines(BaseModel):
-    __tablename__ = 'MEDICINES'
 
     name = db.Column(db.String(255), nullable=False)
     price = db.Column(db.Double, nullable=False)
