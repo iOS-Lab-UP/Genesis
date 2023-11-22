@@ -91,7 +91,7 @@ def get_user_image_endpoint(current_user: User) -> dict[str:str]:
     # Retrieve the user
     if not current_user:
         return generate_response(False, 'User not found', None, 404), 404
-    return generate_response(True, 'Image successfully retrieved', {'images': get_user_image(current_user)}, 200)
+    return generate_response(True, 'Image successfully retrieved', {'images': get_user_images_data(current_user)}, 200)
 
 
 @image_classifier.route('/get_doctor_patient_files/<patient_id>', methods=['GET'])
