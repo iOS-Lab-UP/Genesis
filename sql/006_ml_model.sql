@@ -16,7 +16,7 @@ CREATE TABLE
         `SICKNESS` varchar(255) NOT NULL,
         `DESCRIPTION` varchar(255) NOT NULL,
         `PRECISION` double NOT NULL,
-        `STATUS` tinyint NOT NULL,
+        `STATUS` tinyint NOT NULL, -- You can change 0 to any default value you prefer
         `CREATION_DATE` date NOT NULL,
         `LAST_UPDATE` timestamp NOT NULL,
         PRIMARY KEY (`ID`),

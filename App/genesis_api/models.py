@@ -302,3 +302,16 @@ class Prescription(BaseModel):
         db.DateTime, comment='End date of the medication, can be NULL if indefinite or as needed')
     notifications_enabled = db.Column(
         db.Boolean, default=True, comment='Whether notifications for this prescription are enabled')
+
+
+class Medicines(BaseModel):
+    __tablename__ = 'MEDICINES'
+
+    name = db.Column(db.String(255), nullable=False)
+    price = db.Column(db.Double, nullable=False)
+    is_discontinued = db.Column(db.Boolean, nullable=False)
+    manufacturer_name = db.Column(db.String(255), nullable=False)
+    type = db.Column(db.String(255), nullable=False)
+    pack_size_label = db.Column(db.String(255), nullable=False)
+    short_composition1 = db.Column(db.String(255), nullable=False)
+    short_composition2 = db.Column(db.String(255), nullable=False)
