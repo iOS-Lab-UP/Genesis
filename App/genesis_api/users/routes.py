@@ -11,7 +11,6 @@ user = Blueprint('user', __name__)
 executor = ThreadPoolExecutor(2)
 
 
-
 @user.route('/sign_up', methods=['POST'])
 @limiter.limit("5 per minute")  # Apply rate limiting
 @sql_injection_free
@@ -45,7 +44,7 @@ def verify_identity_endpoint(current_user: User) -> dict[str:str]:
 
     try:
         args = parse_request(fields, 'json', required_fields)
-        user = verify_code( current_user.id, **args)
+        user = verify_code(current_user.id, **args)
         return generate_response(True, 'User was successfully verified', user.to_dict(), 201), 201
     except InvalidRequestParameters as e:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
@@ -54,13 +53,15 @@ def verify_identity_endpoint(current_user: User) -> dict[str:str]:
     except Exception as e:
         return generate_response(False, 'Could not verify user', None, 500, str(e)), 500
 
+
 @user.route('/sign_up/resend_verification_code', methods=['GET'])
 @token_required
 def resend_verification_code_endpoint(current_user: User) -> dict[str:str]:
-    
+
     try:
         verification_code = generate_verification_code(current_user.id)
-        send_verification_code(executor,current_user.to_dict(), verification_code.code)
+        send_verification_code(
+            executor, current_user.to_dict(), verification_code.code)
         return generate_response(True, 'Verification code was successfully sent', None, 200), 200
     except Exception as e:
         return generate_response(False, 'Could not send verification code', None, 500, str(e)), 500
@@ -98,9 +99,16 @@ def sign_out_endpoint(current_user: User) -> tuple[dict[str, any], int]:
 def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
     '''Get user information'''
     try:
-        # Retrieve user data using the authenticated user's ID
-        user = get_user(current_user.id)
-        return generate_response(True, f'User: {user.id}', user.to_dict(), 200), 200
+        username = request.args.get('username')
+        if username:
+            user = User.query.filter_by(username=username).first()
+        else:
+            user = get_user(user_id=current_user.id)
+
+        if user:
+            return generate_response(True, f'User: {user.id}', user.to_dict(), 200), 200
+        else:
+            return generate_response(False, 'User not found', None, 404), 404
     except Exception as e:
         return generate_response(False, 'Could not get user', None, 500, str(e)), 500
 
@@ -117,12 +125,14 @@ def update_user_endpoint(current_user: User) -> dict[str:str]:
         return generate_response(False, 'No fields to update', None, 400), 400
 
     try:
-        user = update_user( current_user.id, **args)
+        user = update_user(current_user.id, **args)
         return generate_response(True, 'User data updated', get_user(user.id).to_dict(), 200), 200
     except Exception as e:
         return generate_response(False, 'Could not update user', None, 500, str(e)), 500
 
 # TODO: Need to finish this endpoint
+
+
 @user.route('/deleteUser', methods=['DELETE'])
 @sql_injection_free
 def delete_user() -> dict[str:str]:
@@ -147,15 +157,17 @@ def get_patients_endpoint() -> dict[str:str]:
     except Exception as e:
         return generate_response(False, 'Could not get patients', None, 500, str(e)), 500
 
+
 @user.route('/get_user_to_user_relation', methods=['GET'])
 @token_required
-def get_patient_doctors_endpoint(user_id:int) -> dict[str:str]:
+def get_patient_doctors_endpoint(user_id: int) -> dict[str:str]:
     try:
         users = get_user_to_user_relation(user_id.id)
         return generate_response(True, 'Users retrieved', users, 200), 200
     except Exception as e:
         return generate_response(False, 'Could not get doctors', None, 500, str(e)), 500
-    
+
+
 @user.route('/create_doctor_patient_association', methods=['POST'])
 @token_required
 @sql_injection_free
@@ -165,14 +177,13 @@ def create_doctor_patient_association_endpoint(current_user: User) -> dict[str:s
 
     try:
         args = parse_request(fields, 'json', required_fields)
-        association = create_doctor_patient_association( current_user.id, **args)
+        association = create_doctor_patient_association(
+            current_user.id, **args)
         return generate_response(True, 'Association created', association, 201), 201
     except InvalidRequestParameters as e:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
     except Exception as e:
         return generate_response(False, 'Could not create association', None, 500, str(e)), 500
-
-
 
 
 @user.route('/new_password', methods=['PATCH'])

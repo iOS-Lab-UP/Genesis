@@ -14,7 +14,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from concurrent.futures import ThreadPoolExecutor
 
 
-
 import random
 import logging
 import requests
@@ -22,11 +21,10 @@ import ssl
 import smtplib
 
 
-
 def create_user(name: str, username: str, email: str, password: str, birth_date: datetime, profile_id: int, cedula: str = None) -> User:
     '''Create a user and return a User object type'''
 
-    if not is_username_valid( username) or not is_valid_email( email) or not db.session.query(Profile).filter(Profile.id == profile_id).first():
+    if not is_username_valid(username) or not is_valid_email(email) or not db.session.query(Profile).filter(Profile.id == profile_id).first():
         raise InvalidRequestParameters(
             'User already exists in the database. Please try again with a different email or username.')
 
@@ -78,7 +76,7 @@ def sign_in(username: str, password: str) -> User:
         raise
 
 
-def sign_out( jwt_token: str) -> User:
+def sign_out(jwt_token: str) -> User:
     '''Sign out function in order to sign out user by adding jwt token to redis'''
     try:
         Config.REDIS_CLIENT.set(jwt_token, 'expired')
@@ -87,12 +85,22 @@ def sign_out( jwt_token: str) -> User:
         logging.error(e)
 
 
-
-def get_user(id: int) -> dict[str:str]:
-    '''Get user function in order to get user's info from DB'''
+def get_user(id: int = None, username: str = None) -> dict[str:str]:
+    '''Get user function to get user's info from the DB by ID or username.'''
 
     try:
-        return User.get_data(id)
+        if username:
+            # Fetch user by username
+            user = User.query.filter_by(username=username).first()
+        else:
+            # Fetch user by ID
+            user = User.query.get(id)
+
+        if user:
+            return user.get_data()
+        else:
+            return None
+
     except Exception as e:
         logging.error(e)
         return None
@@ -106,10 +114,12 @@ def validate_user_data(user_data: User, profile_id: int, cedula: str) -> dict:
         validated_data['name'] = user_data['name']
 
     if 'username' in user_data:
-        validated_data['username'] = user_data['username'] if is_username_valid( user_data['username']) else None
+        validated_data['username'] = user_data['username'] if is_username_valid(
+            user_data['username']) else None
 
     if 'email' in user_data:
-        validated_data['email'] = user_data['email'] if is_valid_email( user_data['email']) else None
+        validated_data['email'] = user_data['email'] if is_valid_email(
+            user_data['email']) else None
 
     if 'password' in user_data:
         validated_data['password_hash'] = generate_password_hash(
@@ -198,7 +208,7 @@ def validate_doctor_identity(cedula: str, name: str) -> bool:
     return is_valid(response.json(), first_name, last_name1, last_name2, id_cedula)
 
 
-def generate_verification_code( current_user_id: User) -> str:
+def generate_verification_code(current_user_id: User) -> str:
     '''Generate verification code in order to generate verification code'''
     try:
         if not db.session.query(VerificationCode).filter(VerificationCode.user_id == current_user_id).first():
@@ -216,7 +226,7 @@ def generate_verification_code( current_user_id: User) -> str:
         raise
 
 
-def update_verification_code( user_id: User) -> str:
+def update_verification_code(user_id: User) -> str:
     '''Update verification code associated to user_id in db'''
     try:
         verificaton_code = db.session.query(VerificationCode).filter(
@@ -224,7 +234,7 @@ def update_verification_code( user_id: User) -> str:
         if verificaton_code:
             verificaton_code.code = ''.join(
                 random.choice('0123456789') for _ in range(5))
-            
+
             db.session.commit()
             return verificaton_code
 
@@ -331,6 +341,7 @@ def send_verification_code(executor, user: dict[User], code: str) -> None:
     '''
     executor.submit(send_email, mail, html)
 
+
 def send_email(mail, html):
     mail.set_payload(html)
     context = ssl.create_default_context()
@@ -344,12 +355,12 @@ def send_email(mail, html):
             smtp.sendmail(mail['From'], mail['To'],
                           mail.as_string().encode('utf-8'))
             smtp.quit()
-        
+
     except smtplib.SMTPException as e:
         logging.error('Error sending email: %s', e)
 
 
-def verify_code( user_id: int, code: str) -> User:
+def verify_code(user_id: int, code: str) -> User:
     '''Compare the user input code to the one in DB associated to him,
         if they are equal, set user status to 1 else raise an error
     '''
@@ -373,6 +384,7 @@ def verify_code( user_id: int, code: str) -> User:
         logging.error(e)
         raise
 
+
 def send_doctor_patient_association_email(session: any, doctor_id: int, patient_username: str) -> None:
     """
     Params:
@@ -385,7 +397,8 @@ def send_doctor_patient_association_email(session: any, doctor_id: int, patient_
     doctor_email = session.query(User).filter_by(id=doctor_id).first().email
 
     # Get the patient's email
-    patient_email = session.query(User).filter_by(username=patient_username).first().email
+    patient_email = session.query(User).filter_by(
+        username=patient_username).first().email
 
     # Send the email to the patient
     mail = EmailMessage()
@@ -395,22 +408,25 @@ def send_doctor_patient_association_email(session: any, doctor_id: int, patient_
     mail.add_header('Content-Type', 'text/html',)
 
 
-def create_doctor_patient_association( doctor_id: int, patient_username: int) -> str:
+def create_doctor_patient_association(doctor_id: int, patient_username: int) -> str:
     """ Register an association between a doctor and a patient """
-    
-    patient_id = db.session.query(User).filter_by(username=patient_username).first().id
+
+    patient_id = db.session.query(User).filter_by(
+        username=patient_username).first().id
 
     # Check if an association already exists
     existing_association = db.session.query(DoctorPatientAssociation).\
         filter_by(doctor_id=doctor_id, patient_id=patient_id).first()
-    
+
     if existing_association:
         raise RelationshipAlreadyExistsError("The relationship already exists")
-    
+
     # Create a new association
-    association = DoctorPatientAssociation(doctor_id=doctor_id, patient_id=patient_id)
+    association = DoctorPatientAssociation(
+        doctor_id=doctor_id, patient_id=patient_id)
     db.session.add(association)
     db.session.commit()
+
 
 def get_users_by_profile(profile_id: int) -> list[User]:
     """ Get all the users with a given profile_id
@@ -420,7 +436,8 @@ def get_users_by_profile(profile_id: int) -> list[User]:
         list[User]
       """
     try:
-        users = [user.to_dict() for user in db.session.query(User).filter_by(profile_id=profile_id).all()]
+        users = [user.to_dict() for user in db.session.query(
+            User).filter_by(profile_id=profile_id).all()]
         return users
     except Exception as e:
         logging.error(e)
@@ -438,7 +455,6 @@ def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
         join(DoctorPatientAssociation, DoctorPatientAssociation.patient_id == User.id).\
         filter(DoctorPatientAssociation.doctor_id == doctor_id).\
         all()
-    
 
     # Get all the images associated with each patient
     images = []
@@ -450,19 +466,23 @@ def get_doctor_patient_files(session: any, doctor_id: int) -> list[str]:
 
     return [image.to_dict() for image in images]
 
+
 def get_user_to_user_relation(user_id: int) -> list[User]:
     """Get all the users with profile_id related to the user_id"""
 
     try:
         associations = db.session.query(DoctorPatientAssociation).filter(
-            (DoctorPatientAssociation.doctor_id == user_id) | (DoctorPatientAssociation.patient_id == user_id)
+            (DoctorPatientAssociation.doctor_id == user_id) | (
+                DoctorPatientAssociation.patient_id == user_id)
         ).all()
 
         # Extract the IDs of related users
-        related_user_ids = [association.doctor_id if association.doctor_id != user_id else association.patient_id for association in associations]
+        related_user_ids = [association.doctor_id if association.doctor_id !=
+                            user_id else association.patient_id for association in associations]
 
         # Retrieve the related users based on their IDs
-        related_users = db.session.query(User).filter(User.id.in_(related_user_ids)).all()
+        related_users = db.session.query(User).filter(
+            User.id.in_(related_user_ids)).all()
 
         # Convert related users to a list of dictionaries
         related_users_dicts = [user.to_dict() for user in related_users]
@@ -474,10 +494,11 @@ def get_user_to_user_relation(user_id: int) -> list[User]:
         raise
 
 
-def new_password( user_id: int, current_password: str, new_password: str) -> User:
+def new_password(user_id: int, current_password: str, new_password: str) -> User:
     user = db.session.query(User).filter(User.id == user_id).first()
     if user and user.check_password(current_password):
-        user.password_hash = generate_password_hash(new_password).decode('utf-8')
+        user.password_hash = generate_password_hash(
+            new_password).decode('utf-8')
         db.session.commit()
         return user
 
