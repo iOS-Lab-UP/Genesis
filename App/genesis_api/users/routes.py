@@ -103,7 +103,7 @@ def get_user_data_endpoint(current_user: User) -> tuple[dict[str, any], int]:
         if username:
             user = User.query.filter_by(username=username).first()
         else:
-            user = get_user(user_id=current_user.id)
+            user = get_user(id=current_user.id)
 
         if user:
             return generate_response(True, f'User: {user.id}', user.to_dict(), 200), 200
