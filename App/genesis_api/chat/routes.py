@@ -1,37 +1,38 @@
 from genesis_api import socketio
 from genesis_api.chat.utils import *
 from flask_socketio import join_room, leave_room, emit
+from flask import request
 
 
 @socketio.on('connect')
-def on_connect():
-    print('User connected')
+def handle_connect():
+    print('Client connected:', request.sid)
 
 
 @socketio.on('disconnect')
-def on_disconnect():
-    print('User disconnected')
+def handle_disconnect():
+    print('Client disconnected:', request.sid)
 
 
-@socketio.on('chat_message')
-def handle_chat_message(message):
-    print(f"Received message: {message}")
-    emit('new_message', message, broadcast=True)
+@socketio.on('send_message')
+def handle_send_message(data):
+    print('Received message:', data)
+    emit('new_message', data, broadcast=True)
 
 
 @socketio.on('join')
-def on_join(data):
+def handle_join(data):
     username = data['username']
     room = data['room']
     join_room(room)
-    socketio.emit(
-        'join_room', f'{username} has joined the room {room}', room=room)
+    emit('join_room', {
+         'message': f'{username} has joined the room {room}'}, room=room)
 
 
 @socketio.on('leave')
-def on_leave(data):
+def handle_leave(data):
     username = data['username']
     room = data['room']
     leave_room(room)
-    socketio.emit(
-        'leave_room', f'{username} has left the room {room}', room=room)
+    emit('leave_room', {
+         'message': f'{username} has left the room {room}'}, room=room)
