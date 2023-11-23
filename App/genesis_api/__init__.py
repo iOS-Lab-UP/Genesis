@@ -61,7 +61,7 @@ def create_app(config_class=Config):
     # Initialize cache
 
     cache.init_app(app)
-    socketio.init_app(app)
+    socketio.init_app(app, cors_allowed_origins="*")
 
     from genesis_api.users.routes import user
     from genesis_api.image_classifier.routes import image_classifier
