@@ -1,6 +1,8 @@
 Flask==2.3.2
 Flask-SQLAlchemy==3.0.5
 Flask-Caching==2.0.2
+Flask-SocketIO==5.3.6
+python-socketio==5.10.0
 SQLAlchemy==2.0.16
 mysqlclient==2.1.1
 uptime==3.0.1

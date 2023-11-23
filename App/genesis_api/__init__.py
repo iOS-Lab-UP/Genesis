@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -22,6 +23,11 @@ cache = Cache(config={
     "CACHE_TYPE": "SimpleCache",
     "CACHE_DEFAULT_TIMEOUT": 300
 })
+
+
+# Initialize SocketIO
+# Add CORS configuration as neede
+socketio = SocketIO(cors_allowed_origins="*")
 
 
 # Configure logging
@@ -53,6 +59,7 @@ def create_app(config_class=Config):
     # Initialize cache
 
     cache.init_app(app)
+    socketio.init_app(app)
 
     from genesis_api.users.routes import user
     from genesis_api.image_classifier.routes import image_classifier
