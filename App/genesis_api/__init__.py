@@ -6,6 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_session import Session
 from genesis_api.config import Config
+from flask_cors import CORS
 import logging
 import redis
 
@@ -51,6 +52,7 @@ def create_app(config_class=Config):
     app.config['SESSION_USE_SIGNER'] = True
     app.config['SESSION_KEY_PREFIX'] = 'your_prefix:'
     Session(app)
+    CORS(app)
 
     # Initialize Redis for rate-limiting
 

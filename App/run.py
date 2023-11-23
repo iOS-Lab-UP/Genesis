@@ -1,4 +1,5 @@
 from genesis_api import create_app
+from genesis_api import socketio
 from werkzeug.exceptions import HTTPException
 import traceback
 
@@ -20,3 +21,4 @@ def handle_exception(e):
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True,
             use_reloader=True, use_debugger=True, port=5555)
+    socketio.run(app, debug=True)

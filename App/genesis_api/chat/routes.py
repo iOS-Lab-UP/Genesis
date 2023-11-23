@@ -15,25 +15,8 @@ def on_disconnect():
 
 @socketio.on('chat_message')
 def handle_chat_message(message):
-    try:
-        # Extract the sender's user ID from the message, assuming it's included
-        user_id = message.get('user_id')
-
-        # Optional: Print the message and sender ID to the server console
-        print(f'Message from {user_id}: {message.get("text")}')
-
-        # Emit the new message to all connected clients, including the sender
-        # You can add the user_id to the message if it's not already included
-        emit('new_message', message, broadcast=True)
-
-        # Return True to acknowledge that the message was handled successfully
-        return True
-    except Exception as e:
-        # If there's an error, print the error message to the server console
-        print(f"Error handling chat_message: {e}")
-
-        # Return False to acknowledge that there was an error handling the message
-        return False
+    print(f"Received message: {message}")
+    emit('new_message', message, broadcast=True)
 
 
 @socketio.on('join')

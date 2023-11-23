@@ -18,4 +18,5 @@ flask-restful
 python-dotenv
 redis
 flask_redis==0.4.0
+flask_cors
 Pillow==10.1.0
