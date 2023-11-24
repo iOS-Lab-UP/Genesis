@@ -5,7 +5,7 @@ from flask import request
 
 
 @socketio.on('connect')
-def handle_connect():
+def handle_connect(msg):
     print('Client connected:', request.sid)
 
 
