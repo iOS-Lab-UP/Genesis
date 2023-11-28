@@ -1,4 +1,11 @@
-from genesis_api.models import User,  DoctorPatientAssociation, UserImage,  MedicalHistory, Prescription
+from genesis_api.models import (
+    User,
+    DoctorPatientAssociation,
+    UserImage,
+    MedicalHistory,
+    Prescription,
+    MedicalHistory
+)
 from genesis_api.tools.handlers import *
 from genesis_api.tools.utils import *
 
@@ -247,4 +254,39 @@ def send_patient_feedback(patient_id: int, feedback: str, medical_history_id: in
     except SQLAlchemyError as e:
         logging.exception(
             "An error occurred while sending feedback to a patient: %s", e)
+        raise InternalServerError(e)
+
+def update_appointment(current_user: User, appointmentDate: str, medical_history_id: int) -> None:
+    """
+    Update the appointment date of a medical history report.
+
+    Args:
+        current_user (User): The user who is logged in and making the request.
+        medical_history_id (int): The ID of the medical history report that contains the appointment to be updated.
+        new_appointment_date (str): The new date for the appointment in the format 'YYYY-MM-DD'.
+
+    Raises:
+        ElementNotFoundError: If the medical history report is not found or if the current user is not the patient associated with the report.
+        InternalServerError: If an error occurs while updating the appointment.
+    """
+
+    try:
+        # Get the medical history report
+        medical_history = MedicalHistory.get_data(medical_history_id)
+        if not medical_history:
+            raise ElementNotFoundError('Medical history report not found')
+
+        # Check if the current user is the patient associated with the medical history report
+        if medical_history.association.patient_id != current_user.id:
+            raise ElementNotFoundError('Medical history report not associated with current user')
+
+        # Update the appointment date
+        medical_history.next_appointment_date = appointmentDate
+        db.session.commit()
+
+    except SQLAlchemyError as e:
+        logging.exception("An error occurred while updating the appointment: %s", e)
+        raise InternalServerError(e)
+    except Exception as e:
+        logging.exception("An error occurred while updating the appointment: %s", e)
         raise InternalServerError(e)

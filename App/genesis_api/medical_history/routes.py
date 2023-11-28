@@ -16,9 +16,10 @@ Session = sessionmaker(bind=db.engine)
 @token_required
 @limiter.limit("30 per minute")  # Apply rate limiting
 def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
-    fields = {"observation": str, "next_appointment": str, "diagnostic": str,  "symptoms": str,
-              "private_notes": str, "follow_up_required": bool, "patient_id": int, "user_image": int, "prescription": list}
-    required_fields = ["next_appointment", "diagnostic",  "symptoms",
+    fields = {"observation": str, "next_appointment": str, "diagnostic": str, "symptoms": str,
+              "private_notes": str, "follow_up_required": bool, "patient_id": int, "user_image": int,
+              "prescription": list}
+    required_fields = ["next_appointment", "diagnostic", "symptoms",
                        "follow_up_required", "patient_id", "user_image"]
 
     try:
@@ -37,7 +38,6 @@ def post_medical_history_endpoint(current_user: User) -> dict[str:str]:
 @limiter.limit("30 per minute")  # Apply rate limiting
 @cache.cached(timeout=300, key_prefix='medical_history')
 def get_medical_history_endpoint(current_user: User, patient_id: int) -> dict[str:str]:
-
     try:
         # Assuming there's a function to retrieve medical history in utils
         medical_history = get_medical_history_by_patient(
@@ -55,7 +55,6 @@ def get_medical_history_endpoint(current_user: User, patient_id: int) -> dict[st
 @limiter.limit("30 per minute")  # Apply rate limiting
 @cache.cached(timeout=300, key_prefix='medical_history')
 def get_my_medical_history_endpoint(current_user: User) -> dict[str:str]:
-
     try:
         # Assuming there's a function to retrieve medical history in utils
         medical_history = get_my_medical_history(current_user)
@@ -82,3 +81,20 @@ def send_patient_feedback_endpoint(current_user: User) -> dict[str:str]:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
     except Exception as e:
         return generate_response(False, 'Could not send patient feedback', None, 500, str(e)), 500
+
+
+@medical_history.route('/update_appointment', methods=['PUT'])
+@token_required
+@sql_injection_free
+def update_appointment_endpoint(current_user: User) -> dict[str:str]:
+    fields = {"appointmentDate": str, "medical_history_id": int}
+    required_fields = ["appointmentDate", "medical_history_id"]
+
+    try:
+        args = parse_request(fields, 'json', required_fields)
+        update_appointment(current_user, **args)
+        return generate_response(True, 'Appointment was successfully updated', None, 200), 200
+    except InvalidRequestParameters as e:
+        return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
+    except Exception as e:
+        return generate_response(False, 'Could not update appointment', None, 500, str(e)), 500

@@ -166,4 +166,5 @@ cython_debug/
 # uploads
 genesis_api/static/uploads/
 requests/
+requets/
 .idea/
