@@ -201,3 +201,13 @@ def new_password_endpoint(current_user: User) -> dict[str:str]:
         return generate_response(False, 'Invalid request parameters', None, 400, str(e)), 400
     except Exception as e:
         return generate_response(False, 'Could not change password', None, 500, str(e)), 500
+
+
+@user.route('/get_users', methods=['GET'])
+@token_required
+def get_users_endpoint(current_user: User) -> dict[str:str]:
+    try:
+        users = get_users()
+        return generate_response(True, 'Users retrieved', users, 200), 200
+    except Exception as e:
+        return generate_response(False, 'Could not get users', None, 500, str(e)), 500

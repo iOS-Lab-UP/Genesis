@@ -506,3 +506,13 @@ def new_password(user_id: int, current_password: str, new_password: str) -> User
         raise ValueError(
             f'Invalid credentials for user with id: {user_id}'
         )
+
+def get_all_users() -> list[User]:
+    """Get all the users"""
+
+    try:
+        users = [user.to_dict() for user in User.query.all()]
+        return users
+    except Exception as e:
+        logging.error(e)
+        raise
