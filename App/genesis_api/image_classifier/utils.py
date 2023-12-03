@@ -18,6 +18,7 @@ import numpy as np
 from flask import send_from_directory
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
+from copy import deepcopy
 
 
 # Local imports
@@ -213,20 +214,30 @@ def apply_filters_to_images(image_data_list):
 
     for image_info in image_data_list:
         try:
+            # Create a deep copy of the image_info to avoid circular reference
+            image_info_copy = deepcopy(image_info)
+
             # Decode the base64 image
-            image_bytes = base64.b64decode(image_info['image'])
+            image_bytes = base64.b64decode(image_info_copy['image'])
             image = PILImage.open(BytesIO(image_bytes))
             img = np.array(image.convert('RGB'))
 
-            # Apply the red channel mask
-            red_channel = img[:, :, 0]
-            green_channel = img[:, :, 1]
-            blue_channel = img[:, :, 2]
+            # Convert to RGB
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+            # Extract individual channels
+            red_channel = img_rgb[:, :, 0]
+            green_channel = img_rgb[:, :, 1]
+            blue_channel = img_rgb[:, :, 2]
+
+            # Calculate a mask based on the red channel
             threshold_value = 120
             red_mask = (red_channel > threshold_value) & \
                        (green_channel < threshold_value) & \
                        (blue_channel < threshold_value)
-            img_red_highlighted = np.copy(img)
+
+            # Apply the mask to highlight red areas
+            img_red_highlighted = np.copy(img_rgb)
             img_red_highlighted[~red_mask] = [0, 0, 0]
 
             # Convert the filtered image back to PIL Image for encoding
@@ -238,9 +249,9 @@ def apply_filters_to_images(image_data_list):
             encoded_string = base64.b64encode(
                 buffered.getvalue()).decode('utf-8')
 
-            # Update the image info with the new filtered image
-            image_info['image'] = encoded_string
-            filtered_images.append(image_info)
+            # Update the image_info_copy with the new filtered image
+            image_info_copy['image'] = encoded_string
+            filtered_images.append(image_info_copy)
 
         except Exception as e:
             print(f"An error occurred: {e}")
