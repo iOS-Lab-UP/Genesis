@@ -211,15 +211,14 @@ def apply_filters_to_images(image_data_list):
         # Decode the base64 image
         image_bytes = base64.b64decode(image_info['image'])
         image = PILImage.open(BytesIO(image_bytes))
-        img = np.array(image.convert('RGB'))
 
         # Convert to RGB
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         # Extract individual channels
-        red_channel = img[:, :, 2]
-        green_channel = img[:, :, 1]
-        blue_channel = img[:, :, 0]
+        red_channel = img_rgb[:, :, 2]
+        green_channel = img_rgb[:, :, 1]
+        blue_channel = img_rgb[:, :, 0]
 
         # Calculate a mask based on the red channel
         threshold_value = 120  # Adjust this value as needed
@@ -229,17 +228,6 @@ def apply_filters_to_images(image_data_list):
         # Apply the mask to highlight red areas
         img_red_highlighted = np.copy(img_rgb)
         img_red_highlighted[~red_mask] = [0, 0, 0]
-
-        # Convert to grayscale (optional, for Sobel edge detection)
-        gray_img = cv2.cvtColor(img_red_highlighted, cv2.COLOR_RGB2GRAY)
-
-        # Apply Sobel operator to highlight edges (optional)
-        sobel_x = cv2.Sobel(gray_img, cv2.CV_64F, 1, 0, ksize=3)
-        sobel_y = cv2.Sobel(gray_img, cv2.CV_64F, 0, 1, ksize=3)
-        magnitude = np.sqrt(sobel_x**2 + sobel_y**2)
-
-        # Normalize the magnitude (optional, for Sobel edge detection)
-        magnitude_normalized = np.uint8(255 * magnitude / np.max(magnitude))
 
         # Convert the filtered image back to PIL Image for encoding
         # Choose either 'img_red_highlighted' or 'magnitude_normalized' based on your requirement
