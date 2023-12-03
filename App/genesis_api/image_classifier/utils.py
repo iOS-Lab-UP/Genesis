@@ -208,42 +208,48 @@ def apply_filters_to_images(image_data_list):
     filtered_images = []
 
     for image_info in image_data_list:
-        # Decode the base64 image
-        image_bytes = base64.b64decode(image_info['image'])
-        image = PILImage.open(BytesIO(image_bytes))
+        try:
+            # Decode the base64 image
+            image_bytes = base64.b64decode(image_info['image'])
+            image = PILImage.open(BytesIO(image_bytes))
 
-        # Convert to RGB
-        img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # Convert PIL Image to a NumPy array for OpenCV processing
+            img_np = np.array(image)
 
-        # Extract individual channels
-        red_channel = img_rgb[:, :, 2]
-        green_channel = img_rgb[:, :, 1]
-        blue_channel = img_rgb[:, :, 0]
+            # Convert to RGB (if necessary)
+            img_rgb = cv2.cvtColor(
+                img_np, cv2.COLOR_BGR2RGB) if image.mode == 'RGB' else img_np
 
-        # Calculate a mask based on the red channel
-        threshold_value = 120  # Adjust this value as needed
-        red_mask = (red_channel > threshold_value) & (
-            green_channel < threshold_value) & (blue_channel < threshold_value)
+            # Extract individual channels
+            red_channel = img_rgb[:, :, 0]
+            green_channel = img_rgb[:, :, 1]
+            blue_channel = img_rgb[:, :, 2]
 
-        # Apply the mask to highlight red areas
-        img_red_highlighted = np.copy(img_rgb)
-        img_red_highlighted[~red_mask] = [0, 0, 0]
+            # Calculate a mask based on the red channel
+            threshold_value = 120
+            red_mask = (red_channel > threshold_value) & \
+                       (green_channel < threshold_value) & \
+                       (blue_channel < threshold_value)
 
-        # Convert the filtered image back to PIL Image for encoding
-        # Choose either 'img_red_highlighted' or 'magnitude_normalized' based on your requirement
-        # Use 'magnitude_normalized' if using Sobel
-        filtered_image_pil = PILImage.fromarray(img_red_highlighted)
+            # Apply the mask to highlight red areas
+            img_red_highlighted = np.copy(img_rgb)
+            img_red_highlighted[~red_mask] = [0, 0, 0]
 
-        # Convert the PIL Image to a base64 string
-        buffered = BytesIO()
-        filtered_image_pil.save(buffered, format="JPEG")
-        encoded_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
+            # Convert the filtered image back to PIL Image for encoding
+            filtered_image_pil = PILImage.fromarray(img_red_highlighted)
 
-        # Update the image info with the new filtered image
-        image_info_filtered = image_info.copy()
-        # Replace the original image
-        image_info_filtered['image'] = encoded_string
+            # Convert the PIL Image to a base64 string
+            buffered = BytesIO()
+            filtered_image_pil.save(buffered, format="JPEG")
+            encoded_string = base64.b64encode(
+                buffered.getvalue()).decode('utf-8')
 
-        filtered_images.append(image_info_filtered)
+            # Update the image info with the new filtered image
+            image_info['image'] = encoded_string
+            filtered_images.append(image_info)
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            # Handle the error as appropriate
 
     return filtered_images
