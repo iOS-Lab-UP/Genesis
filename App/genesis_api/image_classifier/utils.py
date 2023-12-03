@@ -217,17 +217,16 @@ def apply_filters_to_images(image_data_list):
         image = PILImage.open(BytesIO(image_bytes))
         img = np.array(image.convert('RGB'))
 
-        # Apply filters
         # Convert to RGB
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # Extract individual channels
-        red_channel = img[:, :, 0]
-        green_channel = img[:, :, 1]
-        blue_channel = img[:, :, 2]
+        red_channel = img_rgb[:, :, 0]
+        green_channel = img_rgb[:, :, 1]
+        blue_channel = img_rgb[:, :, 2]
 
         # Calculate a mask based on the red channel
-        threshold_value = 120
+        threshold_value = 120  # Adjust this value as needed
         red_mask = (red_channel > threshold_value) & (
             green_channel < threshold_value) & (blue_channel < threshold_value)
 
@@ -254,6 +253,10 @@ def apply_filters_to_images(image_data_list):
         filtered_image_pil.save(buffered, format="JPEG")
         encoded_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-        filtered_images.append(encoded_string)
+        # Update the image info with the new filtered image
+        image_info_filtered = image_info.copy()
+        image_info_filtered['image'] = encoded_string
+
+        filtered_images.append(image_info_filtered)
 
     return filtered_images
