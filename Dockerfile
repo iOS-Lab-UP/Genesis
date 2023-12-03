@@ -8,7 +8,10 @@ WORKDIR /genesis_api
 COPY . .
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends python3-venv \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3-venv \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies

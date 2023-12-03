@@ -1,13 +1,24 @@
 # Standard library imports
 import os
 import logging
+
+import base64
+
+
 from typing import Optional
+from io import BytesIO
+from PIL import Image as PILImage
 
 # Third-party library imports
 import base64
+import cv2
+import numpy as np
+
+
 from flask import send_from_directory
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
+
 
 # Local imports
 from genesis_api import db
@@ -88,24 +99,27 @@ def get_user_images_data(current_user: id) -> list[dict[str, str]]:
     # Get all UserImage records for this user
     user_images = UserImage.query.filter_by(user_id=current_user.id).all()
 
-    # Extract the image IDs
+    # Extract the image IDs and apply filters
     image_data = []
     for user_image in user_images:
         image_info = Image.get_data(user_image.image_id).to_dict()
         image_path = os.path.join(Config.UPLOAD_FOLDER, image_info['name'])
 
-        # Encode the resized image to base64
+        # Encode the image to base64
         with open(image_path, "rb") as img_file:
-            encoded_string = base64.b64encode(
-                img_file.read()).decode('utf-8')
+            encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
         image_info['image'] = encoded_string
 
+        # Add additional details
         image_info['ml_diagnostic'] = [MlDiagnostic.get_data(
             ml_id.id).to_dict() for ml_id in user_image.ml_diagnostics]
 
         image_data.append(image_info)
 
-    return image_data
+    # Apply filters to the images
+    filtered_image_data = apply_filters_to_images(image_data)
+
+    return filtered_image_data
 
 
 def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str, str]]:
@@ -188,3 +202,58 @@ def create_mldiagnostic(sickness, precision, user_image_id) -> MlDiagnostic:
         logging.exception("An error occurred while saving an image: %s", e)
         raise InternalServerError(e)
     return ml_model
+
+
+def apply_filters_to_images(image_data_list):
+    filtered_images = []
+
+    for image_info in image_data_list:
+        # Decode the base64 image
+        image_bytes = base64.b64decode(image_info['image'])
+        image = PILImage.open(BytesIO(image_bytes))
+        img = np.array(image.convert('RGB'))
+
+        # Apply filters
+        # Convert to RGB
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        # Extract individual channels
+        red_channel = img[:, :, 0]
+        green_channel = img[:, :, 1]
+        blue_channel = img[:, :, 2]
+
+        # Calculate a mask based on the red channel
+        threshold_value = 120
+        red_mask = (red_channel > threshold_value) & (
+            green_channel < threshold_value) & (blue_channel < threshold_value)
+
+        # Apply the mask to the original image
+        img_red_highlighted = np.copy(img_rgb)
+        img_red_highlighted[~red_mask] = [0, 0, 0]
+
+        # Convert to grayscale
+        gray_img = cv2.cvtColor(img_red_highlighted, cv2.COLOR_RGB2GRAY)
+
+        # Apply Sobel operator to highlight edges
+        sobel_x = cv2.Sobel(gray_img, cv2.CV_64F, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(gray_img, cv2.CV_64F, 0, 1, ksize=3)
+        magnitude = np.sqrt(sobel_x**2 + sobel_y**2)
+
+        # Normalize the magnitude
+        magnitude_normalized = np.uint8(255 * magnitude / np.max(magnitude))
+
+        # Convert the filtered image back to PIL Image for encoding
+        filtered_image_pil = PILImage.fromarray(magnitude_normalized)
+
+        # Convert the PIL Image to a base64 string
+        buffered = BytesIO()
+        filtered_image_pil.save(buffered, format="JPEG")
+        encoded_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+        # Update the image info with the new filtered image
+        image_info_filtered = image_info.copy()
+        image_info_filtered['image_filtered'] = encoded_string
+
+        filtered_images.append(image_info_filtered)
+
+    return filtered_images
