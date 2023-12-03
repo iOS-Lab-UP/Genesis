@@ -14,6 +14,7 @@ RUN apt-get update && \
     libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
+
 # Install dependencies
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
