@@ -217,9 +217,9 @@ def apply_filters_to_images(image_data_list):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # Extract individual channels
-        red_channel = img_rgb[:, :, 0]
-        green_channel = img_rgb[:, :, 1]
-        blue_channel = img_rgb[:, :, 2]
+        red_channel = img[:, :, 2]
+        green_channel = img[:, :, 1]
+        blue_channel = img[:, :, 0]
 
         # Calculate a mask based on the red channel
         threshold_value = 120  # Adjust this value as needed
