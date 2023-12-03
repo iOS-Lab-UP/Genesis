@@ -18,7 +18,6 @@ import numpy as np
 from flask import send_from_directory
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
-from copy import deepcopy
 
 
 # Local imports
@@ -100,7 +99,7 @@ def get_user_images_data(current_user: id) -> list[dict[str, str]]:
     # Get all UserImage records for this user
     user_images = UserImage.query.filter_by(user_id=current_user.id).all()
 
-    # Extract the image IDs
+    # Extract the image IDs and apply filters
     image_data = []
     for user_image in user_images:
         image_info = Image.get_data(user_image.image_id).to_dict()
@@ -118,13 +117,9 @@ def get_user_images_data(current_user: id) -> list[dict[str, str]]:
         image_data.append(image_info)
 
     # Apply filters to the images
-    filtered_image_strings = apply_filters_to_images(image_data)
+    filtered_image_data = apply_filters_to_images(image_data)
 
-    # Replace original image strings with filtered ones
-    for i, filtered_image in enumerate(filtered_image_strings):
-        image_data[i]['image'] = filtered_image
-
-    return image_data
+    return filtered_image_data
 
 
 def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str, str]]:
@@ -213,48 +208,54 @@ def apply_filters_to_images(image_data_list):
     filtered_images = []
 
     for image_info in image_data_list:
-        try:
-            # Create a deep copy of the image_info to avoid circular reference
-            image_info_copy = deepcopy(image_info)
+        # Decode the base64 image
+        image_bytes = base64.b64decode(image_info['image'])
+        image = PILImage.open(BytesIO(image_bytes))
+        img = np.array(image.convert('RGB'))
 
-            # Decode the base64 image
-            image_bytes = base64.b64decode(image_info_copy['image'])
-            image = PILImage.open(BytesIO(image_bytes))
-            img = np.array(image.convert('RGB'))
+        # Convert to RGB
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-            # Convert to RGB
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # Extract individual channels
+        red_channel = img_rgb[:, :, 0]
+        green_channel = img_rgb[:, :, 1]
+        blue_channel = img_rgb[:, :, 2]
 
-            # Extract individual channels
-            red_channel = img_rgb[:, :, 0]
-            green_channel = img_rgb[:, :, 1]
-            blue_channel = img_rgb[:, :, 2]
+        # Calculate a mask based on the red channel
+        threshold_value = 120  # Adjust this value as needed
+        red_mask = (red_channel > threshold_value) & (
+            green_channel < threshold_value) & (blue_channel < threshold_value)
 
-            # Calculate a mask based on the red channel
-            threshold_value = 120
-            red_mask = (red_channel > threshold_value) & \
-                       (green_channel < threshold_value) & \
-                       (blue_channel < threshold_value)
+        # Apply the mask to highlight red areas
+        img_red_highlighted = np.copy(img_rgb)
+        img_red_highlighted[~red_mask] = [0, 0, 0]
 
-            # Apply the mask to highlight red areas
-            img_red_highlighted = np.copy(img_rgb)
-            img_red_highlighted[~red_mask] = [0, 0, 0]
+        # Convert to grayscale (optional, for Sobel edge detection)
+        gray_img = cv2.cvtColor(img_red_highlighted, cv2.COLOR_RGB2GRAY)
 
-            # Convert the filtered image back to PIL Image for encoding
-            filtered_image_pil = PILImage.fromarray(img_red_highlighted)
+        # Apply Sobel operator to highlight edges (optional)
+        sobel_x = cv2.Sobel(gray_img, cv2.CV_64F, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(gray_img, cv2.CV_64F, 0, 1, ksize=3)
+        magnitude = np.sqrt(sobel_x**2 + sobel_y**2)
 
-            # Convert the PIL Image to a base64 string
-            buffered = BytesIO()
-            filtered_image_pil.save(buffered, format="JPEG")
-            encoded_string = base64.b64encode(
-                buffered.getvalue()).decode('utf-8')
+        # Normalize the magnitude (optional, for Sobel edge detection)
+        magnitude_normalized = np.uint8(255 * magnitude / np.max(magnitude))
 
-            # Update the image_info_copy with the new filtered image
-            image_info_copy['image'] = encoded_string
-            filtered_images.append(image_info_copy)
+        # Convert the filtered image back to PIL Image for encoding
+        # Choose either 'img_red_highlighted' or 'magnitude_normalized' based on your requirement
+        # Use 'magnitude_normalized' if using Sobel
+        filtered_image_pil = PILImage.fromarray(img_red_highlighted)
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            # Handle the error as appropriate
+        # Convert the PIL Image to a base64 string
+        buffered = BytesIO()
+        filtered_image_pil.save(buffered, format="JPEG")
+        encoded_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+        # Update the image info with the new filtered image
+        image_info_filtered = image_info.copy()
+        # Replace the original image
+        image_info_filtered['image'] = encoded_string
+
+        filtered_images.append(image_info_filtered)
 
     return filtered_images
