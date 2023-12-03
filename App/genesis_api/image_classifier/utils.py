@@ -99,7 +99,7 @@ def get_user_images_data(current_user: id) -> list[dict[str, str]]:
     # Get all UserImage records for this user
     user_images = UserImage.query.filter_by(user_id=current_user.id).all()
 
-    # Extract the image IDs and apply filters
+    # Extract the image IDs
     image_data = []
     for user_image in user_images:
         image_info = Image.get_data(user_image.image_id).to_dict()
@@ -117,9 +117,13 @@ def get_user_images_data(current_user: id) -> list[dict[str, str]]:
         image_data.append(image_info)
 
     # Apply filters to the images
-    filtered_image_data = apply_filters_to_images(image_data)
+    filtered_image_strings = apply_filters_to_images(image_data)
 
-    return filtered_image_data
+    # Replace original image strings with filtered ones
+    for i, filtered_image in enumerate(filtered_image_strings):
+        image_data[i]['image'] = filtered_image
+
+    return image_data
 
 
 def get_user_image(user: User, image_id: Optional[int] = None) -> list[dict[str, str]]:
@@ -250,10 +254,6 @@ def apply_filters_to_images(image_data_list):
         filtered_image_pil.save(buffered, format="JPEG")
         encoded_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-        # Update the image info with the new filtered image
-        image_info_filtered = image_info.copy()
-        image_info_filtered['image_filtered'] = encoded_string
-
-        filtered_images.append(image_info_filtered)
+        filtered_images.append(encoded_string)
 
     return filtered_images
