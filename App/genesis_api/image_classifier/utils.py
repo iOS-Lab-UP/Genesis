@@ -213,17 +213,17 @@ def apply_filters_to_images(image_data_list):
             image_bytes = base64.b64decode(image_info['image'])
             image = PILImage.open(BytesIO(image_bytes))
 
-            # Convert PIL Image to a NumPy array for OpenCV processing
+            # Convert PIL Image to a NumPy array
             img_np = np.array(image)
 
-            # Convert to RGB (if necessary)
-            img_rgb = cv2.cvtColor(
-                img_np, cv2.COLOR_BGR2RGB) if image.mode == 'RGB' else img_np
+            # Check if the image is in 'RGB' mode, convert if not
+            if image.mode != 'RGB':
+                img_np = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
 
             # Extract individual channels
-            red_channel = img_rgb[:, :, 0]
-            green_channel = img_rgb[:, :, 1]
-            blue_channel = img_rgb[:, :, 2]
+            red_channel = img_np[:, :, 0]
+            green_channel = img_np[:, :, 1]
+            blue_channel = img_np[:, :, 2]
 
             # Calculate a mask based on the red channel
             threshold_value = 120
@@ -232,7 +232,7 @@ def apply_filters_to_images(image_data_list):
                        (blue_channel < threshold_value)
 
             # Apply the mask to highlight red areas
-            img_red_highlighted = np.copy(img_rgb)
+            img_red_highlighted = np.copy(img_np)
             img_red_highlighted[~red_mask] = [0, 0, 0]
 
             # Convert the filtered image back to PIL Image for encoding
